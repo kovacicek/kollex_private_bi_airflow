@@ -2,16 +2,11 @@ from datetime import datetime, timedelta
 import psycopg2
 import csv
 import io
-#from tkinter.messagebox import QUESTION
-import mysql.connector
-import pandas as pd
 import os
 import numpy as np
 import time
 import io
 import csv
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
 import requests
 from include.dbt_run_all_layers import dbt_run_all_layers
 
@@ -24,12 +19,8 @@ from include.monday_api import run_monday_api
 
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres
-   
-  
 
-  
-   
-   
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -63,48 +54,25 @@ with DAG(
 ) as dag:
 
     # t1, t2 and t3 are examples of tasks created by instantiating operators
-    data_dog_log 	=  BashOperator        (
-                                                task_id='Started_Diffs_DAG',
-                                                bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-                                                dag=dag,
-                                            
-                                            )
-    copy_GFGH_DATA_cp_import = PythonOperator(            task_id='copy_GFGH_DATA_cp_import'
-                                                        , python_callable=My_SQL_to_Postgres,
-                                                          op_kwargs={'pg_schema': 'from_pim'
-                                                                    , 'pg_tables_to_use': 'cp_gfgh_import'
-                                                                    , 'mysql_tables_to_copy': 'import'
-                                                                    , 'mysql_schema': 'gfghdata'
-                                                                    ,'delta_load' :'FULL_RELOAD'
-                                                                    ,'unique_column':'id'
-                                                                    ,'timestamp_column':'updated_at'
-                                                                    , 'look_back_period' : 0
-                                                                    ,'chunksize_to_use':10000}
-                                                        , retries=5
-                                            )
-    copy_cp_gfgh_product_import = PythonOperator(              task_id='copy_cp_gfgh_product_import'
-                                                        , python_callable=My_SQL_to_Postgres,
-                                                          op_kwargs={'pg_schema': 'from_pim'
-                                                                    , 'pg_tables_to_use': 'cp_gfgh_product_import'
-                                                                    , 'mysql_tables_to_copy': 'product_import'
-                                                                    , 'mysql_schema': 'gfghdata'
-                                                                    ,'delta_load' :'INSERT_NEW_ROWS_DROP_OLD_TABLE'
-                                                                    ,'unique_column':'NOT_NEEDED'
-                                                                    ,'timestamp_column':'updated_at'
-                                                                    , 'look_back_period' : 60
-                                                                    ,'chunksize_to_use':10000}
-                                                        , retries=5
-                                                    )
-    data_dog_log_final 	=  BashOperator        (
-                                                
-                                                    task_id='finished_Diffs_DAG',
-                                                    bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-                                                    dag=dag,
-                                            
-                                                )
+    data_dog_log = BashOperator(
+        task_id='Started_Diffs_DAG',
+        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
+        dag=dag,
 
-    
-data_dog_log >>copy_cp_gfgh_product_import >>copy_GFGH_DATA_cp_import>>data_dog_log_final
+    )
+    copy_GFGH_DATA_cp_import = PythonOperator(task_id='copy_GFGH_DATA_cp_import', python_callable=My_SQL_to_Postgres,
+                                              op_kwargs={'pg_schema': 'from_pim', 'pg_tables_to_use': 'cp_gfgh_import', 'mysql_tables_to_copy': 'import', 'mysql_schema': 'gfghdata', 'delta_load': 'FULL_RELOAD', 'unique_column': 'id', 'timestamp_column': 'updated_at', 'look_back_period': 0, 'chunksize_to_use': 10000}, retries=5
+                                              )
+    copy_cp_gfgh_product_import = PythonOperator(task_id='copy_cp_gfgh_product_import', python_callable=My_SQL_to_Postgres,
+                                                 op_kwargs={'pg_schema': 'from_pim', 'pg_tables_to_use': 'cp_gfgh_product_import', 'mysql_tables_to_copy': 'product_import', 'mysql_schema': 'gfghdata', 'delta_load': 'INSERT_NEW_ROWS_DROP_OLD_TABLE', 'unique_column': 'NOT_NEEDED', 'timestamp_column': 'updated_at', 'look_back_period': 60, 'chunksize_to_use': 10000}, retries=5
+                                                 )
+    data_dog_log_final = BashOperator(
+
+        task_id='finished_Diffs_DAG',
+        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
+        dag=dag,
+
+    )
 
 
-    
+data_dog_log >> copy_cp_gfgh_product_import >> copy_GFGH_DATA_cp_import >> data_dog_log_final

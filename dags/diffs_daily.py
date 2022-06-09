@@ -9,7 +9,8 @@ import io
 import csv
 import requests
 from include.dbt_run_all_layers import dbt_run_all_layers
-
+ # pylint: disable=unused-wildcard-import, method-hidden
+ # pylint: enable=too-many-lines
 import airflow
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator

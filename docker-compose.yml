@@ -38,9 +38,11 @@
 ---
 version: '3'
 x-airflow-common:
+  
   &airflow-common
   build : .
   #image: ${AIRFLOW_IMAGE_NAME:-kollex}
+
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -74,6 +76,7 @@ x-airflow-common:
 
 services:
   postgres:
+    container_name: postgres_db
     image: postgres:13
     environment:
       POSTGRES_USER: airflow
@@ -88,6 +91,7 @@ services:
     restart: always
 
   redis:
+    container_name: redis_queue
     image: redis:latest
     ports:
       - 6379:6379
@@ -99,8 +103,10 @@ services:
     restart: always
 
   airflow-webserver:
+    
     <<: *airflow-common
     command: webserver
+    container_name: airflow-webserver
     ports:
       - 8080:8080
     healthcheck:
@@ -113,6 +119,7 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
+    container_name: airflow-scheduler
     restart: always
 
   # airflow-worker:
@@ -123,6 +130,7 @@ services:
   airflow-init:
     <<: *airflow-common
     command: version
+    container_name: airflow-initializer
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_UPGRADE: 'true'

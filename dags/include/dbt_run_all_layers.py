@@ -13,7 +13,7 @@ def dbt_run_all_layers():
 
     #string  = {'Authorization': 'token {}'.format(myToken),'cause' :'Kick Off From Testing Script'}
     head ={'Authorization': 'token {}'.format(myToken)}
-    body ={'cause' :'Kicked Off From ALL_SKUS Airflow'}
+    body ={'cause' :'Kicked Off From Airflow'}
     r = requests.post(myUrl, headers=head,data=body)
     r_dictionary= r.json()
     print(r.text)

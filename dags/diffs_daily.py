@@ -20,6 +20,7 @@ from include.monday_api import run_monday_api
 
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.dbt_run_diffs import dbt_run_diffs
 
 
 default_args = {
@@ -67,6 +68,11 @@ with DAG(
     copy_cp_gfgh_product_import = PythonOperator(task_id='copy_cp_gfgh_product_import', python_callable=My_SQL_to_Postgres,
                                                  op_kwargs={'pg_schema': 'from_pim', 'pg_tables_to_use': 'cp_gfgh_product_import', 'mysql_tables_to_copy': 'product_import', 'mysql_schema': 'gfghdata', 'delta_load': 'INSERT_NEW_ROWS_DROP_OLD_TABLE', 'unique_column': 'NOT_NEEDED', 'timestamp_column': 'updated_at', 'look_back_period': 60, 'chunksize_to_use': 10000}, retries=5
                                                  )
+    dbt_run_diffs = PythonOperator(
+                                        task_id='dbt_run_diffs'
+                                        , python_callable=dbt_run_diffs,
+                                        trigger_rule='all_success'
+                                        ) 
     data_dog_log_final = BashOperator(
 
         task_id='finished_Diffs_DAG',
@@ -76,4 +82,4 @@ with DAG(
     )
 
 
-data_dog_log >> copy_cp_gfgh_product_import >> copy_GFGH_DATA_cp_import >> data_dog_log_final
+data_dog_log >> copy_cp_gfgh_product_import >> copy_GFGH_DATA_cp_import >>dbt_run_diffs>> data_dog_log_final

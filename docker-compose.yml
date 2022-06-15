@@ -68,8 +68,8 @@ x-airflow-common:
   env_file:
       - ./dags/include/enviroment_variables.env
   depends_on:
-    redis:
-      condition: service_healthy
+    # redis:
+    #   condition: service_healthy
     postgres:
       condition: service_healthy
     
@@ -90,17 +90,17 @@ services:
       retries: 5
     restart: always
 
-  redis:
-    container_name: redis_queue
-    image: redis:latest
-    ports:
-      - 6379:6379
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 30s
-      retries: 50
-    restart: always
+  # redis:
+  #   container_name: redis_queue
+  #   image: redis:latest
+  #   ports:
+  #     - 6379:6379
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 30s
+  #     retries: 50
+  #   restart: always
 
   airflow-webserver:
     

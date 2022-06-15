@@ -560,7 +560,7 @@ def run_full_load():
 
         chunk.drop('is_enabled',axis=1,inplace=True)
         # pg_schema = os.getenv('PG_SCHEMA_Junk')
-        pg_tables_to_use =os.getenv('PG_ALL_SKUS')
+        pg_tables_to_use =pg_tables_to_use
 
 
         # if count==0 :

@@ -24,8 +24,8 @@ def My_SQL_to_Postgres_prod(**kwargs):
     from pandas import read_sql
     ######Postgres Credentials############
     pg_host =  os.getenv('PG_HOST')
-    pg_user = os.getenv('PG_USERNAME')
-    pg_password = os.getenv('PG_PASSWORD')
+    pg_user = os.getenv('PG_USERNAME_WRITE')
+    pg_password = os.getenv('PG_PASSWORD_WRITE')
     pg_database = os.getenv('PG_DATABASE')
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)

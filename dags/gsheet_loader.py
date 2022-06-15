@@ -166,8 +166,17 @@ with DAG(
                                                                     , 'sheet_name':'new'
                                                                    }, retries=5
                                         )
+    COPY_MERCHANT_CS = PythonOperator(
+                                                                task_id='COPY_MERCHANT_CS'
+                                                                , python_callable=run_gsheet_load,
+                                                           op_kwargs={'pg_schema': 'sheet_loader'
+                                                                    , 'pg_tables_to_use': 'merchant_status_cs'
+                                                                    ,'url' :'https://docs.google.com/spreadsheets/d/1qoMyAAgWpvaXCnR6oQzdBP8Rdz5_axki2uUTxY0XSkI/edit?pli=1#gid=1301213425'
+                                                                    , 'sheet_name':'frozen'
+                                                                   }, retries=5
+                                        )
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')
 data_dog_log >> [COPY_QR_KOLLEX_EXPRESS ,COPY_QR_KOLLEX_SHOP ,COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
 COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER ,COPY_QR_KOLLEX_SHOP_SHEET_LOADER ,COPY_HOLDING ,COPY_MERCHANT_ACTIVE,
-COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader] >>data_dog_log_final
+COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader,COPY_MERCHANT_CS] >>data_dog_log_final
     

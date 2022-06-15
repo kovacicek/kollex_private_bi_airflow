@@ -33,9 +33,9 @@ def run_delta_load():
     logger.setLevel('INFO')
     # load_dotenv('enviroment_variables.env')
 
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
+    pg_host =  os.getenv('PG_HOST')
+    pg_user = os.getenv('PG_USERNAME_WRITE')
+    pg_password = os.getenv('PG_PASSWORD_WRITE')
 
     
     pg_database = os.getenv('PG_DATABASE')

@@ -53,15 +53,15 @@ def run_full_load():
 
     
     
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
+    pg_host =  os.getenv('PG_HOST')
+    pg_user = os.getenv('PG_USERNAME_WRITE')
+    pg_password = os.getenv('PG_PASSWORD_WRITE')
     # pg_database =os.getenv('pg_connect_string')
 
 
     pg_database = os.getenv('PG_DATABASE')
     pg_schema = os.getenv('PG_RAW_SCHEMA')
-    pg_tables_to_use = os.getenv('PG_ALL_SKUS')
+    pg_tables_to_use ='all_skus_airflow'# os.getenv('PG_ALL_SKUS')
    
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}/{pg_schema}"
     #print(pg_connect_string)
@@ -560,7 +560,7 @@ def run_full_load():
 
         chunk.drop('is_enabled',axis=1,inplace=True)
         # pg_schema = os.getenv('PG_SCHEMA_Junk')
-        pg_tables_to_use =os.getenv('PG_ALL_SKUS')
+        pg_tables_to_use =pg_tables_to_use
 
 
         # if count==0 :

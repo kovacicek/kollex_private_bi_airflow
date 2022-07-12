@@ -41,7 +41,6 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from include.delta_load_all_skus import run_delta_load
 from include.full_load_all_skus import run_full_load
-from include.full_load_all_skus_to_sql import run_full_load_to_sql
 from include.dbt_run_raw_layer import dbt_run_raw_layers
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres

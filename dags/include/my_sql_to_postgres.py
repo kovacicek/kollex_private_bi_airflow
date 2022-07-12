@@ -22,11 +22,13 @@ def My_SQL_to_Postgres(**kwargs):
     import os
     import requests
     from pandas import read_sql
+    from airflow.models import Variable
+
     ######Postgres Credentials############
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
-    pg_database = os.getenv('PG_DATABASE')
+    pg_host = Variable.get("PG_HOST_STAGING")
+    pg_user =Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password = Variable.get("PG_PASSWORD_WRITE_STAGING")
+    pg_database = Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
    #### Prams#############
@@ -38,10 +40,10 @@ def My_SQL_to_Postgres(**kwargs):
 
    
     ######My SQL Credentials############  
-    mysql_host =  os.getenv('MYSQL_HOST')
-    mysql_port =  os.getenv('MYSQL_PORT')
-    mysql_user = os.getenv('MYSQL_USERNAME')
-    mysql_password = os.getenv('MYSQL_PASSWORD')
+    mysql_host =  Variable.get("MYSQL_HOST")
+    mysql_port =  Variable.get("MYSQL_PORT")
+    mysql_user = Variable.get("MYSQL_USERNAME")
+    mysql_password = Variable.get("MYSQL_PASSWORD")
     mysql_schema = kwargs['mysql_schema'] 
     mysql_tables_to_copy = kwargs['mysql_tables_to_copy']
     chunksize_to_use = kwargs['chunksize_to_use']

@@ -13,13 +13,13 @@ def run_gedat():
     from datetime import datetime, timedelta
     from dotenv import load_dotenv
     import pandas as pd
+    from airflow.models import Variable
 
-    load_dotenv('enviroment_variables.env')
 
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
-    pg_database = os.getenv('PG_DATABASE')
+    pg_host =   Variable.get("PG_HOST_STAGING")
+    pg_user = Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password =  Variable.get("PG_PASSWORD_WRITE_STAGING")
+    pg_database =  Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
 
@@ -140,9 +140,9 @@ def run_gedat():
     ########## Upload List of customers to SFTP
 
     path = '/kollex-transfer/gfgh/gedat/kollex'
-    SFTP_HOST = os.getenv("SFTP_HOST")
-    SFTP_USER = os.getenv("SFTP_USER")
-    SFTP_PASS = os.getenv("SFTP_PASS")
+    SFTP_HOST = Variable.get("SFTP_HOST")
+    SFTP_USER = Variable.get("SFTP_USER")
+    SFTP_PASS = Variable.get("SFTP_PASS")
 
 
     ########## Upload the table to the SFTP

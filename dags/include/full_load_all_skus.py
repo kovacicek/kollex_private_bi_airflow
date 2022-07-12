@@ -145,7 +145,6 @@ def run_full_load():
 
 
 
-    # pg_host = os.getenv('PG_HOST')
     pg_database =  Variable.get("PG_DATABASE")
 
 

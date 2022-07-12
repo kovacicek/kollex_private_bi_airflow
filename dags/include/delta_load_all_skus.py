@@ -558,7 +558,7 @@ def run_delta_load():
 
 
 
-    pg_tables_to_use =os.getenv('PG_ALL_SKUS')
+    pg_tables_to_use =Variable.get("PG_ALL_SKUS")
     pg_connect_string = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 

@@ -46,7 +46,7 @@ from include.dbt_run_raw_layer import dbt_run_raw_layers
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres
 # Logging
-
+from airflow.models import Variable
 def branch_on():
 
     # os.chdir('include')

@@ -19,7 +19,7 @@ from airflow.operators.dummy_operator import DummyOperator
 import requests
 from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
-
+from airflow.models import Variable
 
 
 default_args = {
@@ -48,7 +48,7 @@ def dbt_run():
     os.chdir('include')
     
     load_dotenv('enviroment_variables.env')
-    myToken = os.getenv('dbt_token')
+    myToken = Variable.get("dbt_token")
     myUrl = 'https://cloud.getdbt.com/api/v2/accounts/1335/jobs/2497/run/'
 
     #string  = {'Authorization': 'token {}'.format(myToken),'cause' :'Kick Off From Testing Script'}

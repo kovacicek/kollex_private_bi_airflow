@@ -25,7 +25,7 @@ from airflow.operators.bash import BashOperator
 
 from include.monday_api import run_monday_api
 from include.gedat import run_gedat
-
+from airflow.models import Variable
 
    
 default_args = {

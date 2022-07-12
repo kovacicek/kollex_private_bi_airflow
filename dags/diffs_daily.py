@@ -21,7 +21,7 @@ from include.monday_api import run_monday_api
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres
 from include.dbt_run_diffs import dbt_run_diffs
-
+from airflow.models import Variable
 
 default_args = {
     'owner': 'airflow',

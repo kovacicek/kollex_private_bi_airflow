@@ -33,9 +33,9 @@ def run_delta_load():
     logger.setLevel('INFO')
     # load_dotenv('enviroment_variables.env')
 
-    pg_host =  os.getenv('PG_HOST')
-    pg_user = os.getenv('PG_USERNAME_WRITE')
-    pg_password = os.getenv('PG_PASSWORD_WRITE')
+    pg_host =  os.getenv('PG_HOST_STAGING')
+    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
+    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
 
     
     pg_database = os.getenv('PG_DATABASE')
@@ -526,7 +526,8 @@ def run_delta_load():
     ###################### Extracting Merchant Info 
 
     #print("creating merchant Columns")
-    for merchant in merchants_active['merchant_key']:
+    sorted_merchants= merchants_active.sort_values('merchant_key')
+    for merchant in sorted_merchants['merchant_key']:
     # chunk[str(merchant)] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
         chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None)
         chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
@@ -574,3 +575,5 @@ def run_delta_load():
                 )
     print("Finished Writing to the DWH")
 
+    pg_engine.dispose()
+    mysql_engine.dispose()

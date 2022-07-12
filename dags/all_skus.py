@@ -51,9 +51,9 @@ def branch_on():
 
     # os.chdir('include')
     # load_dotenv('enviroment_variables.env')
-    pg_host =  os.getenv('PG_HOST')
-    pg_user = os.getenv('PG_USERNAME_WRITE')
-    pg_password = os.getenv('PG_PASSWORD_WRITE')
+    pg_host =  os.getenv('PG_HOST_STAGING')
+    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
+    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
 
 
 
@@ -71,7 +71,8 @@ def branch_on():
 
 
     merchants_active_count= pd.read_sql_table('current_merchant_active_count', con=pg_engine,schema=pg_schema)
-
+    print(merchants_active_count)
+    print(merchants_active['merchant_key'].size)
     if (merchants_active['merchant_key'].size != merchants_active_count.loc[0,'merchant_count']):
         merchants_active_count.loc[0,'merchant_count'] = merchants_active['merchant_key'].size
         pg_tables_to_use ='current_merchant_active_count'

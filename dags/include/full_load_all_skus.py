@@ -81,6 +81,10 @@ def run_full_load():
 
 
 
+
+
+
+
     ########################################################################
     ################################ Reading the product tables from Akeneo
     df_product = pd.read_sql("""

@@ -54,9 +54,9 @@ def run_full_load():
 
     
     
-    pg_host = Variable.get("PG_HOST")
-    pg_user =Variable.get("PG_USERNAME_WRITE")
-    pg_password =Variable.get("G_PASSWORD_WRITE")
+    pg_host = Variable.get("PG_HOST_STAGING")
+    pg_user =Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password =Variable.get("PG_PASSWORD_WRITE_STAGING")
 
 
     pg_database =  Variable.get("PG_DATABASE")

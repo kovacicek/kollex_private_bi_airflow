@@ -530,7 +530,8 @@ def run_full_load():
         ###################### Extracting Merchant Info 
 
         #print("creating merchant Columns")
-        for merchant in merchants_active.sort_values('merchant_key'):
+        sorted_merchants= merchants_active.sort_values('merchant_key')
+        for merchant in sorted_merchants['merchant_key']:
             #chunk[str(merchant)] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False).astype(str)
             chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None).astype(str)
             chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None).astype(str)

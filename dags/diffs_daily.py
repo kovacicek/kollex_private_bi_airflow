@@ -1,15 +1,8 @@
  # pyright: reportMissingImports=false
 
 from datetime import datetime, timedelta
-import psycopg2
-import csv
-import io
 import os
-import numpy as np
 import time
-import io
-import csv
-import requests
 from include.dbt_run_all_layers import dbt_run_all_layers
 
 import airflow 

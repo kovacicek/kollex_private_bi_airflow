@@ -3,21 +3,21 @@ import airflow
 from airflow import DAG
 
 
-import psycopg2
-import csv
+# import psycopg2
+# import csv
 import io
 #from tkinter.messagebox import QUESTION
-import mysql.connector
+# import mysql.connector
 import pandas as pd
 import os
-import numpy as np
+# import numpy as np
 import time
 import io
 import csv
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 import requests
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
 from airflow.models import Variable
 
@@ -45,9 +45,9 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 def dbt_run():
-    os.chdir('include')
+    # os.chdir('include')
     
-    load_dotenv('enviroment_variables.env')
+    # load_dotenv('enviroment_variables.env')
     myToken = Variable.get("dbt_token")
     myUrl = 'https://cloud.getdbt.com/api/v2/accounts/1335/jobs/2497/run/'
 

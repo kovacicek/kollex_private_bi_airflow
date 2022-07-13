@@ -4,7 +4,6 @@ from json import JSONDecodeError
 from os import environ
 import pandas as pd
 import requests
-from dotenv import load_dotenv
 import os
 from sqlalchemy import create_engine
 

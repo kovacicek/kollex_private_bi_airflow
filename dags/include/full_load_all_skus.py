@@ -3,50 +3,29 @@ def run_full_load():
 
     #from custom.MySqlToPostgreOperator import MySqlToPostgreOperator
     import json
-    from os import environ
-
     from base64 import b64decode
     from datetime import datetime
     from logging import getLogger, INFO, WARN
     from os import environ
     from sys import exit as sys_exit
     from sqlalchemy import create_engine
-    import io
-    import psycopg2
-    import csv
     from pandas import read_sql_table
-
     from psycopg2.extensions import register_adapter
     from psycopg2.extras import Json
     from psycopg2 import connect
     import pandas as pd
     import warnings
-
-    import psycopg2
-    import csv
-    import io
-    #from tkinter.messagebox import QUESTION
-    import mysql.connector
     import pandas as pd
-    import os
     import numpy as np
-    import time
-    import io
-    import csv
 
-    import requests
-    import os 
-    from dotenv import load_dotenv
+
     # Logging
     from airflow.models import Variable
 
 
 
 
-    # os.chdir('include')
     
-    # load_dotenv('enviroment_variables.env')
-    warnings.filterwarnings("ignore")
     # Logging
     logger = getLogger()
     logger.setLevel('INFO')

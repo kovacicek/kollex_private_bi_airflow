@@ -132,7 +132,7 @@ Testing Scripts/
 *.json
 *.env
 
-*.txt
+
 
 
 logs/

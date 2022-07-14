@@ -29,41 +29,35 @@ import psycopg2
 import csv
 import io
 #from tkinter.messagebox import QUESTION
-import mysql.connector
-import pandas as pd
+
 import os
-import numpy as np
+
 import time
-import io
-import csv
-import requests
+
+
 import os 
-from dotenv import load_dotenv, find_dotenv
 from include.delta_load_all_skus import run_delta_load
 from include.full_load_all_skus import run_full_load
-from include.full_load_all_skus_to_sql import run_full_load_to_sql
 from include.dbt_run_raw_layer import dbt_run_raw_layers
 from include.dbt_run_all_layers import dbt_run_all_layers
 from include.my_sql_to_postgres import My_SQL_to_Postgres
 # Logging
-
+from airflow.models import Variable
 def branch_on():
 
-    # os.chdir('include')
-    # load_dotenv('enviroment_variables.env')
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
+    pg_host =  Variable.get("PG_HOST_STAGING")
+    pg_user = Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password = Variable.get("PG_PASSWORD_WRITE_STAGING")
 
 
 
-    pg_database = os.getenv('PG_DATABASE')
-    pg_schema = os.getenv('PG_RAW_SCHEMA')
+    pg_database =  Variable.get("PG_DATABASE")
+    pg_schema = Variable.get("PG_RAW_SCHEMA")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 
-    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema=os.getenv('PG_RAW_SCHEMA'))
+    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema= Variable.get("PG_RAW_SCHEMA"))
     merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']

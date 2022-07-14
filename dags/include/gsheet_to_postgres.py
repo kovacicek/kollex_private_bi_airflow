@@ -24,9 +24,9 @@ def run_gsheet_load(**kwargs):
         "auth_provider_x509_cert_url":Variable.get("gsheet_creds_auth_provider_x509_cert_url"),
         "client_x509_cert_url": Variable.get("gsheet_creds_client_x509_cert_url")
     }
-    print(type(gsheet_credentials))
-    for key, value in gsheet_credentials.items():
-        print(key, ' : ', value)
+    # print(type(gsheet_credentials))
+    # for key, value in gsheet_credentials.items():
+    #     print(key, ' : ', value)
     gc = gs.service_account_from_dict(gsheet_credentials)
     #gc = gs.service_account(filename='gsheet-loading-into-dwh-d51d3a31aff8.json')
     print('loaded credentials')
@@ -36,12 +36,12 @@ def run_gsheet_load(**kwargs):
     
     ws   = sh.worksheet(kwargs['sheet_name'] )
     #ws = sh.worksheet('kollex express (Coca-Cola)')
-    pg_host =  Variable.get('PG_HOST')
+    pg_host =  Variable.get('PG_HOST_STAGING')
     pg_database = Variable.get('PG_DATABASE')
 
-    pg_user = Variable.get('PG_USERNAME_WRITE')
+    pg_user = Variable.get('PG_USERNAME_WRITE_STAGING')
 
-    pg_password = Variable.get('PG_PASSWORD_WRITE')
+    pg_password = Variable.get('PG_PASSWORD_WRITE_STAGING')
     pg_tables_to_use = kwargs['pg_tables_to_use']
     pg_schema =kwargs['pg_schema']  # Variable.get('PG_SCHEMA')
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"

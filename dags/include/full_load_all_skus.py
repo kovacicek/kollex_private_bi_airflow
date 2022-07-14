@@ -3,49 +3,29 @@ def run_full_load():
 
     #from custom.MySqlToPostgreOperator import MySqlToPostgreOperator
     import json
-    from os import environ
-
     from base64 import b64decode
     from datetime import datetime
     from logging import getLogger, INFO, WARN
     from os import environ
     from sys import exit as sys_exit
     from sqlalchemy import create_engine
-    import io
-    import psycopg2
-    import csv
     from pandas import read_sql_table
-
     from psycopg2.extensions import register_adapter
     from psycopg2.extras import Json
     from psycopg2 import connect
     import pandas as pd
     import warnings
-
-    import psycopg2
-    import csv
-    import io
-    #from tkinter.messagebox import QUESTION
-    import mysql.connector
     import pandas as pd
-    import os
     import numpy as np
-    import time
-    import io
-    import csv
 
-    import requests
-    import os 
-    from dotenv import load_dotenv
+
     # Logging
+    from airflow.models import Variable
 
 
 
 
-    # os.chdir('include')
     
-    # load_dotenv('enviroment_variables.env')
-    warnings.filterwarnings("ignore")
     # Logging
     logger = getLogger()
     logger.setLevel('INFO')
@@ -53,32 +33,34 @@ def run_full_load():
 
     
     
-    pg_host =  os.getenv('PG_HOST')
-    pg_user = os.getenv('PG_USERNAME_WRITE')
-    pg_password = os.getenv('PG_PASSWORD_WRITE')
-    # pg_database =os.getenv('pg_connect_string')
+    pg_host = Variable.get("PG_HOST_STAGING")
+    pg_user =Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password =Variable.get("PG_PASSWORD_WRITE_STAGING")
 
 
-    pg_database = os.getenv('PG_DATABASE')
-    pg_schema = os.getenv('PG_RAW_SCHEMA')
-    pg_tables_to_use ='all_skus_airflow'# os.getenv('PG_ALL_SKUS')
+    pg_database =  Variable.get("PG_DATABASE")
+    pg_schema = Variable.get("PG_RAW_SCHEMA")
+    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
    
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}/{pg_schema}"
-    #print(pg_connect_string)
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
-    chunk_size = 1000  # os.getenv('CHUNK_SIZE')
+    chunk_size = 1000 
     
 
-    mysql_host =  os.getenv('MYSQL_HOST')
-    mysql_port =  os.getenv('MYSQL_PORT')
-    mysql_schema = os.getenv('MYSQL_DATABASE_akeneo')
-    mysql_user = os.getenv('MYSQL_USERNAME')
+    mysql_host =   Variable.get("MYSQL_HOST")
+    mysql_port =   Variable.get("MYSQL_PORT")
+    mysql_schema =  Variable.get("MYSQL_DATABASE_akeneo")
+    mysql_user = Variable.get("MYSQL_USERNAME")
 
-    mysql_password = os.getenv('MYSQL_PASSWORD')
+    mysql_password = Variable.get("MYSQL_PASSWORD")
 
 
     mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
     mysql_engine = create_engine(f"{mysql_connect_string}", echo=False)
+
+
+
+
 
 
 
@@ -146,13 +128,9 @@ def run_full_load():
 
 
 
-    # pg_host = os.getenv('PG_HOST')
-    pg_database = os.getenv('PG_DATABASE')
-    #pg_schema = os.getenv('PG_SCHEMA_Junk')  # os.getenv('PG_SCHEMA')
-    # pg_user = os.getenv('PG_USERNAME_WRITE')
+    pg_database =  Variable.get("PG_DATABASE")
 
-    # pg_password = os.getenv('PG_PASSWORD_WRITE')s
-    # pg_tables_to_use = 'all_skus_2'
+
 
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
@@ -171,7 +149,7 @@ def run_full_load():
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 
 
-    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema=os.getenv('PG_RAW_SCHEMA'))
+    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema= Variable.get("PG_RAW_SCHEMA"))
     merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']
@@ -439,11 +417,10 @@ def run_full_load():
         
         pg_connect_string = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
         pg_engine = create_engine(f"{pg_connect_string}", echo=False)
-        # chunk_size = 1000  # os.getenv('CHUNK_SIZE')
 
 
         sku_category_fact = pd.read_sql_table(
-            'sku_category_fact', con=pg_engine, schema=os.getenv('PG_INFO_SCHEMA'))
+            'sku_category_fact', con=pg_engine, schema= Variable.get("PG_INFO_SCHEMA"))
         chunk = chunk.merge(sku_category_fact, how='inner',
                         left_on='identifier', right_on='sku',suffixes=('', '_y'))
         chunk.drop(chunk.filter(regex='_y$').columns.tolist(),axis=1, inplace=True)
@@ -561,7 +538,6 @@ def run_full_load():
         #print("Writing to the DWH")
 
         chunk.drop('is_enabled',axis=1,inplace=True)
-        # pg_schema = os.getenv('PG_SCHEMA_Junk')
         pg_tables_to_use =pg_tables_to_use
 
 

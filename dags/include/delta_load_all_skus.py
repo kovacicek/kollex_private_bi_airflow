@@ -26,6 +26,7 @@ def run_delta_load():
     import warnings
     import os
     from dotenv import load_dotenv
+    from airflow.models import Variable
 
     warnings.filterwarnings("ignore")
     # Logging
@@ -33,24 +34,24 @@ def run_delta_load():
     logger.setLevel('INFO')
     # load_dotenv('enviroment_variables.env')
 
-    pg_host =  os.getenv('PG_HOST_STAGING')
-    pg_user = os.getenv('PG_USERNAME_WRITE_STAGING')
-    pg_password = os.getenv('PG_PASSWORD_WRITE_STAGING')
+    pg_host = Variable.get("PG_HOST_STAGING")
+    pg_user =Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password =Variable.get("PG_PASSWORD_WRITE_STAGING")
 
     
-    pg_database = os.getenv('PG_DATABASE')
-    pg_schema = os.getenv('PG_RAW_SCHEMA')
-    pg_tables_to_use =os.getenv('PG_ALL_SKUS')
+    pg_database =Variable.get("PG_DATABASE")
+    pg_schema = Variable.get("PG_RAW_SCHEMA")
+    pg_tables_to_use =Variable.get("PG_ALL_SKUS")
     
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}/{pg_schema}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
     chunk_size = 2000  # environ.get('CHUNK_SIZE')
 
 
-    mysql_host = environ.get('MYSQL_HOST')
-    mysql_port = environ.get('MYSQL_PORT')
-    mysql_schema = environ.get('MYSQL_DATABASE_akeneo')
-    mysql_user = environ.get('MYSQL_USERNAME')
+    mysql_host = Variable.get("MYSQL_HOST")
+    mysql_port = Variable.get("MYSQL_PORT")
+    mysql_schema = Variable.get("MYSQL_DATABASE_akeneo")
+    mysql_user =Variable.get("MYSQL_USERNAME")
     
     mysql_password =  environ.get('MYSQL_PASSWORD')
     
@@ -130,7 +131,7 @@ def run_delta_load():
     # pg_user = environ.get('PG_USERNAME_WRITE')
    
     # pg_password =  environ.get('PG_PASSWORD_WRITE')
-    pg_tables_to_use = os.getenv('PG_ALL_SKUS')
+    pg_tables_to_use =Variable.get("PG_ALL_SKUS")
 
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
@@ -167,7 +168,7 @@ def run_delta_load():
 
 
 
-    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema=os.getenv('PG_RAW_SCHEMA'))
+    merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema=Variable.get("PG_RAW_SCHEMA"))
     merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']
@@ -439,7 +440,7 @@ def run_delta_load():
 
 
     sku_category_fact = pd.read_sql_table(
-    'sku_category_fact', con=pg_engine, schema=os.getenv('PG_INFO_SCHEMA'))
+    'sku_category_fact', con=pg_engine, schema=Variable.get("PG_INFO_SCHEMA"))
     chunk = chunk.merge(sku_category_fact, how='inner',
                         left_on='identifier', right_on='sku',suffixes=('', '_y'))
     chunk.drop(chunk.filter(regex='_y$').columns.tolist(),axis=1, inplace=True)
@@ -526,8 +527,7 @@ def run_delta_load():
     ###################### Extracting Merchant Info 
 
     #print("creating merchant Columns")
-    sorted_merchants= merchants_active.sort_values('merchant_key')
-    for merchant in sorted_merchants['merchant_key']:
+    for merchant in merchants_active.sort_values('merchant_key'):
     # chunk[str(merchant)] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
         chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None)
         chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
@@ -558,8 +558,7 @@ def run_delta_load():
 
 
 
-    # pg_schema = os.getenv('PG_SCHEMA_Junk')
-    pg_tables_to_use =os.getenv('PG_ALL_SKUS')
+    pg_tables_to_use =Variable.get("PG_ALL_SKUS")
     pg_connect_string = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 

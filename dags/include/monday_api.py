@@ -17,9 +17,9 @@ def process_monday_api_board(board_name, board_id, limit):
     headers = {'Authorization': api_key}
 
 
-    pg_host =  Variable.get("PG_HOST_STAGING")
-    pg_user =  Variable.get("PG_USERNAME_WRITE_STAGING")
-    pg_password =  Variable.get("PG_PASSWORD_WRITE_STAGING")
+    pg_host =  Variable.get("PG_HOST")
+    pg_user =  Variable.get("PG_USERNAME_WRITE")
+    pg_password =  Variable.get("PG_PASSWORD_WRITE")
 
 
 

@@ -36,12 +36,12 @@ def run_gsheet_load(**kwargs):
     
     ws   = sh.worksheet(kwargs['sheet_name'] )
     #ws = sh.worksheet('kollex express (Coca-Cola)')
-    pg_host =  Variable.get('PG_HOST_STAGING')
+    pg_host =  Variable.get('PG_HOST')
     pg_database = Variable.get('PG_DATABASE')
 
-    pg_user = Variable.get('PG_USERNAME_WRITE_STAGING')
+    pg_user = Variable.get('PG_USERNAME_WRITE')
 
-    pg_password = Variable.get('PG_PASSWORD_WRITE_STAGING')
+    pg_password = Variable.get('PG_PASSWORD_WRITE')
     pg_tables_to_use = kwargs['pg_tables_to_use']
     pg_schema =kwargs['pg_schema']  # Variable.get('PG_SCHEMA')
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"

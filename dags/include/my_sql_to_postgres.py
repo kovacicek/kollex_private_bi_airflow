@@ -25,9 +25,9 @@ def My_SQL_to_Postgres(**kwargs):
     from airflow.models import Variable
 
     ######Postgres Credentials############
-    pg_host = Variable.get("PG_HOST_STAGING")
-    pg_user =Variable.get("PG_USERNAME_WRITE_STAGING")
-    pg_password = Variable.get("PG_PASSWORD_WRITE_STAGING")
+    pg_host = Variable.get("PG_HOST")
+    pg_user =Variable.get("PG_USERNAME_WRITE")
+    pg_password = Variable.get("PG_PASSWORD_WRITE")
     pg_database = Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)

@@ -16,9 +16,9 @@ def run_gedat():
     from airflow.models import Variable
 
 
-    pg_host =   Variable.get("PG_HOST_STAGING")
-    pg_user = Variable.get("PG_USERNAME_WRITE_STAGING")
-    pg_password =  Variable.get("PG_PASSWORD_WRITE_STAGING")
+    pg_host =   Variable.get("PG_HOST")
+    pg_user = Variable.get("PG_USERNAME_WRITE")
+    pg_password =  Variable.get("PG_PASSWORD_WRITE")
     pg_database =  Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
@@ -215,9 +215,9 @@ def run_gedat():
             'KOLLEX_ID',
             'KOLLEX_ADR_ID',
             'GEDAT_ID',
-            'GEDAT_NAME_1',
-            'GEDAT_NAME_2',
-            'GEDAT_STRASSE_1',
+            'GEDAT_NAME1',
+            'GEDAT_NAME2',
+            'GEDAT_STRASSE1',
             'GEDAT_PLZ',
             'GEDAT_ORT',
             'GEDAT_GT',

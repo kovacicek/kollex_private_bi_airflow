@@ -16,17 +16,18 @@ def run_gedat():
     from airflow.models import Variable
 
 
-    pg_host =   Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password =  Variable.get("PG_PASSWORD_WRITE")
+    pg_host =   Variable.get("PG_HOST_STAGING")
+    pg_user = Variable.get("PG_USERNAME_WRITE_STAGING")
+    pg_password =  Variable.get("PG_PASSWORD_WRITE_STAGING")
     pg_database =  Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
 
     ############ Create list of customers based on agreed format
     ############ with gedat
-
-    query = """
+    connection = pg_engine.connect()
+    
+    query = f"""
             with merchants as (
                             select '01'                                                as "Satzart"
                                 , '00000001'                                          as "Empfänger"
@@ -60,7 +61,7 @@ def run_gedat():
                                     left join fdw_customer_service.contact on merchant_has_contacts.fk_contact
                                 = contact.id_contact
                                     left join fdw_customer_service.address on address.id_address = merchant.fk_address
-                            where merchant.name not like '%test%' and merchant.name not like '%Test%'
+                            where merchant.name not like '%%test%%' and merchant.name not like '%%Test%%'
                         )
 
 
@@ -98,7 +99,7 @@ def run_gedat():
                                                 on customer.id_customer = customer_has_contacts.fk_customer
                                     left join fdw_customer_service.contact
                                                 on customer_has_contacts.fk_contact = contact.id_contact
-                            where customer.name not like '%test%' and customer.name not like '%Test%'
+                            where customer.name not like '%%test%%' and customer.name not like '%%Test%%'
 
                         )
 
@@ -116,8 +117,8 @@ def run_gedat():
         from final
         where "Straße u. Hausnummer" <> ''
                                     """
-
-    df = pd.read_sql_query(query, pg_engine)
+    from sqlalchemy import text
+    df= pd.read_sql(query,con=pg_engine)
     logging.info(f'Data loaded, closing connection and tunnel')
 
 
@@ -145,23 +146,23 @@ def run_gedat():
     SFTP_PASS = Variable.get("SFTP_PASS")
 
 
-    ########## Upload the table to the SFTP
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(SFTP_HOST, username=SFTP_USER, password=SFTP_PASS)
+    # ########## Upload the table to the SFTP
+    # client = paramiko.SSHClient()
+    # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # client.connect(SFTP_HOST, username=SFTP_USER, password=SFTP_PASS)
 
-    sftp = client.open_sftp()
-    sftp.put(f"{filename}", f"{path}/{filename}")
-    logging.info(f'Uploaded: {filename} to {path}')
-    ########## Remove all Kunden files that were created to be uploaded to gedat
+    # sftp = client.open_sftp()
+    # sftp.put(f"{filename}", f"{path}/{filename}")
+    # logging.info(f'Uploaded: {filename} to {path}')
+    # ########## Remove all Kunden files that were created to be uploaded to gedat
 
-    import glob
-    files_to_remove =glob.glob('Kunden_*.txt')
-    import os
+    # import glob
+    # files_to_remove =glob.glob('Kunden_*.txt')
+    # import os
 
-    [os.remove(file) for file in files_to_remove]
+    # [os.remove(file) for file in files_to_remove]
 
-    sftp.close()
+    # sftp.close()
 
 
     ########## Download all files from SFTP

@@ -70,23 +70,7 @@ with DAG(
 
     # t1, t2 and t3 are examples of tasks created by instantiating operators
     data_dog_log = DummyOperator(task_id='data_dog_log', retries=3)
-    COPY_QR_KOLLEX_EXPRESS = PythonOperator(
-                                                            task_id='COPY_QR_KOLLEX_EXPRESS'
-                                                        , python_callable=run_gsheet_load,
-                                                          op_kwargs={'pg_schema': 'kollex_express_cola_customers'
-                                                                    , 'pg_tables_to_use': 'kollex_express'
-                                                                    ,'url' :'https://docs.google.com/spreadsheets/d/1BZCcB5m66lkrhY2_kmTVuFYaMbPHA1pMEMz7prqLHiw/edit#gid=984401877'
-                                                                    , 'sheet_name':'kollex express (Coca-Cola)'
-                                                                   }, retries=5)
-    COPY_QR_KOLLEX_SHOP = PythonOperator(
-                                                                task_id='COPY_QR_KOLLEX_SHOP'
-                                                                , python_callable=run_gsheet_load,
-                                                           op_kwargs={'pg_schema': 'kollex_express_cola_customers'
-                                                                    , 'pg_tables_to_use': 'kollex_shop'
-                                                                    ,'url' :'https://docs.google.com/spreadsheets/d/1BZCcB5m66lkrhY2_kmTVuFYaMbPHA1pMEMz7prqLHiw/edit#gid=984401877'
-                                                                    , 'sheet_name':'kollex (Coca-Cola)'
-                                                                   }, retries=5
-                                        )
+
     COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER = PythonOperator(
                                                             task_id='COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER'
                                                         , python_callable=run_gsheet_load,
@@ -176,7 +160,7 @@ with DAG(
                                                                    }, retries=5
                                         )
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')
-data_dog_log >> [COPY_QR_KOLLEX_EXPRESS,COPY_QR_KOLLEX_SHOP,COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
+data_dog_log >> [COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
 COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER ,COPY_QR_KOLLEX_SHOP_SHEET_LOADER ,COPY_HOLDING ,COPY_MERCHANT_ACTIVE,
 COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader,COPY_MERCHANT_CS] >>data_dog_log_final
     

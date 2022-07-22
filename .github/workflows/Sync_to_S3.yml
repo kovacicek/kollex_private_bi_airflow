@@ -20,12 +20,12 @@ jobs:
       - name: Assume Role
         uses: youyo/awscredswrap@v1
         with:
-          role_arn: arn:aws:iam::867992298652:role/staging.Airflow_Administrator
+          role_arn: arn:aws:iam::867992298652:role/staging.AirflowGitHubS3Sync
           duration_seconds: 3600
           role_session_name: 'awscredswrap@GitHubActions'
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'eu-central-1'
 
       - name: S3 Sync
@@ -33,7 +33,7 @@ jobs:
         with:
           args: --acl public-read --follow-symlinks --delete --exclude '.git/*' --exclude '.github/*'
         env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET_STAGING }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}
 

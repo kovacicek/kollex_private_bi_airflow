@@ -16,11 +16,22 @@ jobs:
     # https://github.com/marketplace/actions/s3-sync 
     steps:
       - uses: actions/checkout@master
-      - uses: jakejarvis/s3-sync-action@master
+      
+      - name: Assume Role
+        uses: youyo/awscredswrap@v1
         with:
-          role-to-assume: arn:aws:iam::867992298652:role/staging.AdminAccessRole
+          role_arn: arn:aws:iam::867992298652:role/staging.AdminAccessRole
+          duration_seconds: 3600
+          role_session_name: 'awscredswrap@GitHubActions'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'eu-central-1'
+
+      - name: S3 Sync
+        uses: jakejarvis/s3-sync-action@master
+        with:
           args: --acl public-read --follow-symlinks --delete --exclude '.git/*' --exclude '.github/*'
-          aws-region: eu-central-1
         env:
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET_STAGING }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

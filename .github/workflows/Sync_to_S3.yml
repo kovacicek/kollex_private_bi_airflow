@@ -16,11 +16,11 @@ jobs:
     # https://github.com/marketplace/actions/s3-sync 
     steps:
       - uses: actions/checkout@master
-      
+
       - name: Assume Role
         uses: youyo/awscredswrap@v1
         with:
-          role_arn: arn:aws:iam::867992298652:role/staging.AdminAccessRole
+          role_arn: arn:aws:iam::867992298652:role/staging.AirflowGitHubS3Sync
           duration_seconds: 3600
           role_session_name: 'awscredswrap@GitHubActions'
         env:

@@ -21,7 +21,7 @@ jobs:
       - run  : ls
       - name: Upload to S3
         run: |
-          aws s3 sync ./build s3://${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
+          aws s3 sync . s3://${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}

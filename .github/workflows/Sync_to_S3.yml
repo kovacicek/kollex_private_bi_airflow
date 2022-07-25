@@ -1,3 +1,4 @@
+
 # This is a basic workflow to help you get started with Actions
 name: SyncToS3
 # Controls when the action will run. 
@@ -15,16 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     # https://github.com/marketplace/actions/s3-sync 
     steps:
-      
-      - name : checkout master branch
-        uses:  actions/checkout@master
-      - run  : ls
-      - name: Upload to S3
-        run: |
-          aws s3 sync . s3://${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
+      - uses: actions/checkout@master
+
+      - name: S3 Sync
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args:  --follow-symlinks --delete --exclude '.git/*' --exclude '.github/*'
         env:
+          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
           AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'eu-central-1'
-        
-

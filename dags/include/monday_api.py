@@ -88,8 +88,8 @@ def process_monday_api_board(board_name, board_id, limit):
         index=False,
     )
     with engine.connect() as connection:
-        connection.execute("GRANT USAGE ON SCHEMA prod_reporting_layer TO dwh_readonly")
-        connection.execute("GRANT SELECT ON ALL TABLES IN SCHEMA prod_reporting_layer TO dwh_readonly")
+        connection.execute(f"GRANT USAGE ON SCHEMA prod_reporting_layer TO {pg_user}")
+        connection.execute(f"GRANT SELECT ON ALL TABLES IN SCHEMA prod_reporting_layer TO {pg_user}")
     logging.info(f"Finished uploading, closing connection")
     engine.dispose()
     return True

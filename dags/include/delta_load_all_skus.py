@@ -53,11 +53,11 @@ def run_delta_load():
     mysql_schema = Variable.get("MYSQL_DATABASE_akeneo")
     mysql_user =Variable.get("MYSQL_USERNAME")
     
-    mysql_password =  environ.get('MYSQL_PASSWORD')
+    mysql_password = Variable.get("MYSQL_PASSWORD")
     
     # mysql_tables_to_copy = 
     mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
-    mysql_engine = create_engine(f"{mysql_connect_string}", echo=False)
+    mysql_engine = create_engine(f"{mysql_connect_string}", echo=True)
 
 
 

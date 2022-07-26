@@ -82,7 +82,8 @@ def My_SQL_to_Postgres(**kwargs):
 
 
             df_identifiers_to_delete=df
-            
+            if (df_identifiers_to_delete.empty ):
+                return "no updates"
             identifiers_old= df_identifiers_to_delete[unique_column].iloc[:-1].apply(lambda x :"'"+str(x)+"',".strip()).to_list()
             identifiers_old.append(" '"+str(df_identifiers_to_delete[unique_column].iloc[-1])+"'")
             identifiers_old.insert(0,"(")

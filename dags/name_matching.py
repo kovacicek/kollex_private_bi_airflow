@@ -61,7 +61,7 @@ with DAG(
 
     
     COPY_MERCHANT_CS = PythonOperator(
-                                                                task_id='COPY_MERCHANT_CS'
+                                                                task_id='Reading Input Data into DB'
                                                                 , python_callable=run_gsheet_load,
                                                            op_kwargs={'pg_schema': 'sheet_loader'
                                                                     , 'pg_tables_to_use': 'Input_data_for_name_matching'

@@ -1,3 +1,4 @@
+
 # This is a basic workflow to help you get started with Actions
 name: SyncToS3
 # Controls when the action will run. 
@@ -22,7 +23,7 @@ jobs:
         with:
           args:  --follow-symlinks --delete --exclude '.git/*' --exclude '.github/*'
         env:
-          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }} #alter this variables when you want to sync it with production bucket
-          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID_STAGING}} #alter this variables when you want to sync it with production bucket
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY_STAGING }} #alter this variables when you want to sync it with production bucket
 
+          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}

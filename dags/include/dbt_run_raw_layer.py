@@ -11,7 +11,7 @@ def dbt_run_raw_layers():
     # load_dotenv('enviroment_variables.env')
 
     myToken =Variable.get("dbt_token")
-    myUrl = Variable.get("raw_layer_url'")
+    myUrl = Variable.get("raw_layer_url")
 
     #string  = {'Authorization': 'token {}'.format(myToken),'cause' :'Kick Off From Testing Script'}
     head ={'Authorization': 'token {}'.format(myToken)}

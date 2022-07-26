@@ -11,7 +11,7 @@ def dbt_run_all_layers():
     # load_dotenv('enviroment_variables.env')
 
     myToken = Variable.get("dbt_token")
-    myUrl =  Variable.get("diffs_url")
+    myUrl =  Variable.get("all_layers_url")
 
     #string  = {'Authorization': 'token {}'.format(myToken),'cause' :'Kick Off From Testing Script'}
     head ={'Authorization': 'token {}'.format(myToken)}

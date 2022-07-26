@@ -23,6 +23,7 @@ jobs:
         with:
           args:  --follow-symlinks --delete --exclude '.git/*' --exclude '.github/*'
         env:
+
           AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
           AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY }}

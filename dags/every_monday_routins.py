@@ -71,7 +71,7 @@ with DAG(
                                             dag=dag,
                                             
                                             )
-data_dog_log >> run_monday_api #>>get_gedat_results
+data_dog_log >> run_monday_api >>get_gedat_results >>data_dog_log_finished
 
 
     

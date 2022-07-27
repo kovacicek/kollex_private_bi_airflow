@@ -19,6 +19,8 @@ from airflow.operators.dummy_operator import DummyOperator
 import requests
 # from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
+from include.name_matching import Name_matching
+
 from airflow.models import Variable
 
 
@@ -47,7 +49,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="Name Matching",
+    dag_id="Name_Matching",
     start_date=datetime.today() - timedelta(days=1),
     schedule_interval="0 */1 * * *",
     catchup=False,
@@ -60,15 +62,20 @@ with DAG(
     data_dog_log = DummyOperator(task_id='data_dog_log', retries=3)
 
     
-    COPY_MERCHANT_CS = PythonOperator(
-                                                                task_id='Reading Input Data into DB'
-                                                                , python_callable=run_gsheet_load,
-                                                           op_kwargs={'pg_schema': 'sheet_loader'
-                                                                    , 'pg_tables_to_use': 'Input_data_for_name_matching'
-                                                                    ,'url' :'https://docs.google.com/spreadsheets/d/1QhsizWoJ-7wyUuO8kwVWfbxmu3h__tDgOTNgLG9mYFg/edit#gid=1580347407'
-                                                                    , 'sheet_name':'Input_data'
-                                                                   }, retries=5
+    Reading_Input_Data_into_DB = PythonOperator(
+                                                task_id='Reading_Input_Data_into_DB'
+                                                , python_callable=run_gsheet_load,
+                                            op_kwargs={'pg_schema': 'sheet_loader'
+                                                    , 'pg_tables_to_use': 'input_data_for_name_matching'
+                                                    ,'url' :'https://docs.google.com/spreadsheets/d/1vTZ-LY1fKfvkcbTrEg6imnXt6A_PEKX28aP6vQdtW2Y/edit#gid=0'
+                                                    , 'sheet_name':'Input_data'
+                                                    }, retries=5
                                         )
+    Name_Matching_Task = PythonOperator(
+                                        task_id='Name_Matching_Task'
+                                        , python_callable=Name_matching,
+                                        trigger_rule='all_success'
+                                        ) 
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')
-data_dog_log >>data_dog_log_final
+data_dog_log >>Reading_Input_Data_into_DB>>Name_Matching_Task>>data_dog_log_final
     

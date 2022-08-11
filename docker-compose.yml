@@ -65,8 +65,7 @@ x-airflow-common:
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
-  env_file:
-      - ./dags/include/enviroment_variables.env
+
   depends_on:
     # redis:
     #   condition: service_healthy

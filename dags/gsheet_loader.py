@@ -80,6 +80,18 @@ with DAG(
                                                                     , 'sheet_name':'kollex express (Coca-Cola)'
                                                                    }, retries=5
                                                                    )
+    COPY_MERCHANT_CSV = PythonOperator(task_id='COPY_MERCHANT_CSV', python_callable=My_SQL_to_Postgres,
+                                                 op_kwargs={'pg_schema': 'csvexchange'
+                                                         , 'pg_tables_to_use': 'merchants_csv'
+                                                         , 'mysql_tables_to_copy': 'merchants'
+                                                         , 'mysql_schema': 'csvexchange'
+                                                         , 'delta_load': 'FULL_RELOAD'
+                                                         , 'unique_column': 'NOT_NEEDED'
+                                                         , 'timestamp_column': 'updated_at'
+                                                         , 'look_back_period': 60
+                                                         , 'chunksize_to_use': 10000}
+                                                , retries=5
+                                                 )
     COPY_QR_KOLLEX_SHOP_SHEET_LOADER = PythonOperator (
                                                                 task_id='COPY_QR_KOLLEX_SHOP_SHEET_LOADER'
                                                                 , python_callable=run_gsheet_load,

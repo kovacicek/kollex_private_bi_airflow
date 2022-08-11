@@ -19,6 +19,7 @@ from airflow.operators.dummy_operator import DummyOperator
 import requests
 # from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
+from include.my_sql_to_postgres import My_SQL_to_Postgres
 from airflow.models import Variable
 
 
@@ -172,7 +173,7 @@ with DAG(
                                                                    }, retries=5
                                         )
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')
-data_dog_log >> [COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
+data_dog_log >> [COPY_MERCHANT_CSV,COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
 COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER ,COPY_QR_KOLLEX_SHOP_SHEET_LOADER ,COPY_HOLDING ,COPY_MERCHANT_ACTIVE,
 COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader,COPY_MERCHANT_CS] >>data_dog_log_final
     

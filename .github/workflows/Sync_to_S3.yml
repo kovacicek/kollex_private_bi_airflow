@@ -26,6 +26,6 @@ jobs:
 
 
 
-          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_PRODUCTION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID_PRODUCTION }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY_PRODUCTION }}
+          AWS_S3_BUCKET: ${{ secrets.BI_AWS_S3_BUCKET_STAGING }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BI_AWS_ACCESS_KEY_ID_STAGING }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BI_AWS_SECRET_ACCESS_KEY_STAGING }}

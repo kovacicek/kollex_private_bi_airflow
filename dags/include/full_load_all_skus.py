@@ -291,7 +291,7 @@ def run_full_load():
                                                                                     .get('<all_locales>') if x is not None and json.loads(x)
                                                                                                                 .get('net_content_uom') is not None 
                                                                                     else None).astype(str)
-        chunk['structure_packaging_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
+        chunk['structure_packaging_unit'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
                                                                                     .get('structure_packaging_unit')
                                                                                     .get('<all_channels>')
                                                                                     .get('<all_locales>') if x is not None and json.loads(x)
@@ -343,12 +343,6 @@ def run_full_load():
                                                                                     else None).astype(str)
 
 
-        chunk['structure_packaging_unit_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                                    .get('structure_packaging_unit')
-                                                                                    .get('<all_channels>')
-                                                                                    .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                                .get('structure_packaging_unit') is not None 
-                                                                                    else None).astype(str)
         chunk['title_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
                                                                                     .get('title')
                                                                                     .get('<all_channels>')

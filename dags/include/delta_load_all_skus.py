@@ -316,7 +316,7 @@ def run_delta_load():
                                                                             .get('<all_locales>') if x is not None and json.loads(x)
                                                                                                         .get('net_content_uom') is not None 
                                                                             else None)
-    chunk['structure_packaging_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
+    chunk['structure_packaging_unit'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
                                                                             .get('structure_packaging_unit')
                                                                             .get('<all_channels>')
                                                                             .get('<all_locales>') if x is not None and json.loads(x)

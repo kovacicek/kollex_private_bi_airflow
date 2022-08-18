@@ -150,7 +150,7 @@ def run_full_load():
 
 
     merchants_active= pd.read_sql_table('merchants_all', con=pg_engine,schema= Variable.get("PG_RAW_SCHEMA"))
-    merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
+    # merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']
 

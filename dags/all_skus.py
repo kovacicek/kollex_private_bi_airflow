@@ -64,6 +64,9 @@ def branch_on():
 
 
 
+
+
+
     merchants_active_count= pd.read_sql_table('current_merchant_active_count', con=pg_engine,schema=pg_schema)
     print(merchants_active_count)
     print(merchants_active['merchant_key'].size)

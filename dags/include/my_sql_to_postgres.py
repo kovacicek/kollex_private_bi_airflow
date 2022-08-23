@@ -18,7 +18,6 @@ def My_SQL_to_Postgres(**kwargs):
     from psycopg2.extras import Json
     from psycopg2 import connect
     import logging
-    from dotenv import load_dotenv
     import os
     import requests
     from pandas import read_sql
@@ -30,7 +29,7 @@ def My_SQL_to_Postgres(**kwargs):
     pg_password = Variable.get("PG_PASSWORD_WRITE")
     pg_database = Variable.get("PG_DATABASE")
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
+    pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=3600)
    #### Prams#############
     pg_schema = kwargs['pg_schema']  
     pg_tables_to_use = kwargs['pg_tables_to_use']
@@ -49,7 +48,7 @@ def My_SQL_to_Postgres(**kwargs):
     chunksize_to_use = kwargs['chunksize_to_use']
     look_back_period = kwargs['look_back_period']
     mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
-    mysql_engine = create_engine(f"{mysql_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
+    mysql_engine = create_engine(f"{mysql_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=3600)
 
    
     if delta_load == 'FULL_RELOAD':
@@ -57,6 +56,7 @@ def My_SQL_to_Postgres(**kwargs):
                                 con=mysql_engine,
                                chunksize=chunksize_to_use
                             )
+        print("Finished Reading the table")
         pg_conn_args = dict(
                                 host=pg_host,
                                 user=pg_user,
@@ -69,11 +69,12 @@ def My_SQL_to_Postgres(**kwargs):
         cur.execute(f"DROP TABLE if exists {pg_schema}.{pg_tables_to_use} ;")
         connection.commit()
         print("Table {}.{}, emptied before adding updated data.".format(pg_schema, pg_tables_to_use))
+        
 
     elif delta_load=='UPSERT' :
             df = read_sql(f"""  select {unique_column} 
                                 from   {mysql_schema}.{mysql_tables_to_copy} 
-                                where  {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(current_date)+1 DAY
+                                where  {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(current_date)+1 DAY
                                 AND    {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY"""
                         ,con=mysql_engine
                     )
@@ -100,40 +101,43 @@ def My_SQL_to_Postgres(**kwargs):
             connection.execute(f"delete from  {pg_schema}.{pg_tables_to_use} where id  in {identifiers} ")
             df = read_sql(f"""  select * 
                                 from  {mysql_schema}.{mysql_tables_to_copy} 
-                                where {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(current_date)+1 DAY
+                                where {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(curdate())+1 DAY
                                 AND   {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY""",
                             con=mysql_engine
                             ,chunksize=chunksize_to_use
                     )
+            print("Finished Reading the table")
     elif delta_load=='INSERT_NEW_ROWS' :
             df = read_sql(f"""  select * 
                                 from {mysql_schema}.{mysql_tables_to_copy} 
-                                where   {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(current_date)+1 DAY
+                                where   {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate())+1 DAY
                                 AND     {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY
                             """
                         ,  con=mysql_engine
                         , chunksize=chunksize_to_use)
+            print("Finished Reading the table")
     elif delta_load=='INSERT_NEW_ROWS_DROP_OLD_TABLE' :
-        pg_conn_args = dict(
-                                host=pg_host,
-                                user=pg_user,
-                                password=pg_password,
-                                database=pg_database,
-                            )
-        connection = connect(**pg_conn_args)
-        cur = connection.cursor()
-       
-        cur.execute(f"DROP TABLE if exists {pg_schema}.{pg_tables_to_use} ;")
-        connection.commit()
-        print("Table {}.{}, emptied before adding updated data.".format(pg_schema, pg_tables_to_use))
+            pg_conn_args = dict(
+                                    host=pg_host,
+                                    user=pg_user,
+                                    password=pg_password,
+                                    database=pg_database,
+                                )
+            connection = connect(**pg_conn_args)
+            cur = connection.cursor()
+        
+            cur.execute(f"DROP TABLE if exists {pg_schema}.{pg_tables_to_use} ;")
+            connection.commit()
+            print("Table {}.{}, emptied before adding updated data.".format(pg_schema, pg_tables_to_use))
 
-        df = read_sql(f"""  select * 
-                                from {mysql_schema}.{mysql_tables_to_copy} 
-                                where   {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(current_date)+{look_back_period} DAY
-                                AND     {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())+1 DAY
-                            """
-                        ,  con=mysql_engine
-                        , chunksize=chunksize_to_use)
+            df = read_sql(f"""  select * 
+                                    from {mysql_schema}.{mysql_tables_to_copy} 
+                                    where   {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate())+{look_back_period} DAY
+                                    AND     {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())+1 DAY
+                                """
+                            ,  con=mysql_engine
+                            , chunksize=chunksize_to_use)
+            print("Finished Reading the table")
     for i, df_chunk in enumerate(df):
             print(i, df_chunk.shape)
             if not df_chunk.empty:

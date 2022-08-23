@@ -75,7 +75,7 @@ with DAG(
                                                          , 'delta_load': 'INSERT_NEW_ROWS_DROP_OLD_TABLE'
                                                          , 'unique_column': 'NOT_NEEDED'
                                                          , 'timestamp_column': 'updated_at'
-                                                         , 'look_back_period': 60
+                                                         , 'look_back_period': 22 #### 22 because i want the last 3 weeks cuz it's enough
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
                                                  )

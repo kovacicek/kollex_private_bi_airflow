@@ -25,7 +25,6 @@ def run_delta_load():
     import pandas as pd
     import warnings
     import os
-    from dotenv import load_dotenv
     from airflow.models import Variable
 
     warnings.filterwarnings("ignore")

@@ -189,7 +189,6 @@ def run_gedat():
         # logging.info(f'Moved {file} to /history folder on remote')
     ############### Download everthing from History
     import os 
-    import os
     if not os.path.exists("gedat"):
         os.makedirs("gedat")
     os.chdir("gedat")

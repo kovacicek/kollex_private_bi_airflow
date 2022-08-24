@@ -153,6 +153,7 @@ def run_full_load():
     # merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']
+    merchants_active = merchants_active[merchants_active["merchant_key"]!='merchant_key']
 
     for df_chunk in df_product:
         chunk = df_chunk
@@ -532,6 +533,8 @@ def run_full_load():
         #print("Writing to the DWH")
 
         chunk.drop('is_enabled',axis=1,inplace=True)
+        chunk.drop('merchant_key_id',axis=1,inplace=True)
+        chunk.drop('merchant_key_enabled',axis=1,inplace=True)
         pg_tables_to_use =pg_tables_to_use
 
 

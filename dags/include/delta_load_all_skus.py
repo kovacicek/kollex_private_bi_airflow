@@ -171,6 +171,8 @@ def run_delta_load():
     # merchants_active = merchants_active[~merchants_active["merchant_key"].str.contains('test',na=False)]
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor']
     merchants_active = merchants_active[merchants_active["merchant_key"]!='trinkkontor_trr']
+    merchants_active = merchants_active[merchants_active["merchant_key"]!='merchant_key']
+
 
 
     # for df_chunk in df_product:
@@ -367,12 +369,7 @@ def run_delta_load():
                                                                             else None)
 
 
-    chunk['structure_packaging_unit_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('structure_packaging_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('structure_packaging_unit') is not None 
-                                                                            else None)
+    
     chunk['title_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
                                                                             .get('title')
                                                                             .get('<all_channels>')
@@ -554,7 +551,8 @@ def run_delta_load():
     print("Writing to the DWH")
 
     chunk.drop('is_enabled',axis=1,inplace=True)
-
+    chunk.drop('merchant_key_id',axis=1,inplace=True)
+    chunk.drop('merchant_key_enabled',axis=1,inplace=True)
 
 
     pg_tables_to_use =Variable.get("PG_ALL_SKUS")

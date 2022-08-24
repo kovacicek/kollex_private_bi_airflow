@@ -107,7 +107,7 @@ default_args = {
 with DAG(
     dag_id="PIM_Pipeline",
     start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 */4 * * *",
+    schedule_interval="0 */1 * * *",
     concurrency=100
     ,catchup=False
 ) as dag:

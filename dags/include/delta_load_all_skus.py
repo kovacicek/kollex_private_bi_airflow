@@ -422,7 +422,7 @@ def run_delta_load():
     chunk['net_content_liter'] = chunk['net_content_liter'].combine_first(chunk['net_content_liter_2'])
     chunk['contact_info'] = chunk['contact_info'].combine_first(chunk['contact_info_2'])
 
-    chunk.drop(['title_2','net_content_2','brand_2','net_content_liter_2','contact_info_2'],axis=1,inplace=True)
+    chunk.drop(['title_2','net_content_2','brand_2','net_content_liter_2','contact_info_2'],axis=1,inplace=True,errors='ignore')
     print("finished Consolidating Those columns")
 
 
@@ -439,7 +439,7 @@ def run_delta_load():
     'sku_category_fact', con=pg_engine, schema=Variable.get("PG_INFO_SCHEMA"))
     chunk = chunk.merge(sku_category_fact, how='inner',
                         left_on='identifier', right_on='sku',suffixes=('', '_y'))
-    chunk.drop(chunk.filter(regex='_y$').columns.tolist(),axis=1, inplace=True)
+    chunk.drop(chunk.filter(regex='_y$').columns.tolist(),axis=1, inplace=True,errors='ignore')
     print("finished extracting SKU Fact Consolidating Those columns")
 
 
@@ -457,61 +457,61 @@ def run_delta_load():
     chunk = chunk.merge(
     attribute_options, left_on='net_content_liter', right_on='code', how='left')
     chunk['net_content_liter'] = chunk['value'].combine_first(chunk['net_content_liter'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='net_content_uom', right_on='code', how='left')
     chunk['net_content_uom'] =  chunk['value'].combine_first(chunk['net_content_uom'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='amount_single_unit', right_on='code', how='left',)
     chunk['amount_single_unit'] = chunk['value'].combine_first(chunk['amount_single_unit'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='structure_packaging_unit', right_on='code', how='left')
     chunk['structure_packaging_unit'] = chunk['value'].combine_first(chunk['structure_packaging_unit'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='type_packaging_unit', right_on='code', how='left')
     chunk['type_packaging_unit'] = chunk['value'].combine_first(chunk['type_packaging_unit'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='golden_record_level1', right_on='code', how='left')
     chunk['golden_record_level1'] = chunk['value'].combine_first(chunk['golden_record_level1'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='status_base', right_on='code', how='left')
     chunk['status_base'] = chunk['value'].combine_first(chunk['status_base'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='brand', right_on='code', how='left')
     chunk['brand'] = chunk['value'].combine_first(chunk['brand'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='amount_single_unit', right_on='code', how='left')
     chunk['amount_single_unit'] = chunk['value'].combine_first(chunk['amount_single_unit'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     chunk = chunk.merge(
     attribute_options, left_on='net_content_uom', right_on='code', how='left')
     chunk['net_content_uom'] = chunk['value'].combine_first(chunk['net_content_uom'])
-    chunk.drop(attribute_options.columns, inplace=True, axis=1)
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 
     print("Finished Translating values from Attribute options")
@@ -523,7 +523,9 @@ def run_delta_load():
     ###################### Extracting Merchant Info 
 
     #print("creating merchant Columns")
-    for merchant in merchants_active.sort_values('merchant_key'):
+    sorted_merchants = merchants_active.sort_values('merchant_key')
+    sorted_merchants = sorted_merchants[sorted_merchants['merchant_key']!='merchant_key']
+    for merchant in sorted_merchants:
     # chunk[str(merchant)] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
         chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None)
         chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
@@ -540,8 +542,8 @@ def run_delta_load():
     #################################
     ######## Droping the JSON columns
     #print("Droping JSON Columns")
-    chunk.drop(['raw_values_model','raw_values','raw_values_product'],axis=1,inplace=True)
-    chunk.drop([ 'family_id', 'product_model_id', 'family_variant_id'],axis=1,inplace=True)
+    chunk.drop(['raw_values_model','raw_values','raw_values_product'],axis=1,inplace=True,errors='ignore')
+    chunk.drop([ 'family_id', 'product_model_id', 'family_variant_id'],axis=1,inplace=True,errors='ignore')
 
 
 
@@ -550,9 +552,9 @@ def run_delta_load():
     ######################### Writing the results in DWH 
     print("Writing to the DWH")
 
-    chunk.drop('is_enabled',axis=1,inplace=True)
-    chunk.drop('merchant_key_id',axis=1,inplace=True)
-    chunk.drop('merchant_key_enabled',axis=1,inplace=True)
+    chunk.drop('is_enabled',axis=1,inplace=True,errors='ignore')
+    chunk.drop('merchant_key_id',axis=1,inplace=True,errors='ignore')
+    chunk.drop('merchant_key_enabled',axis=1,inplace=True,errors='ignore')
 
 
     pg_tables_to_use =Variable.get("PG_ALL_SKUS")

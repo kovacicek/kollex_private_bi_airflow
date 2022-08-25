@@ -18,3 +18,5 @@ def dbt_run_all_layers():
     r = requests.post(myUrl, headers=head,data=body)
     r_dictionary= r.json()
     print(r.text)
+
+

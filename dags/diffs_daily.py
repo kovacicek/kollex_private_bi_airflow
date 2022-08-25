@@ -23,7 +23,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',
     # 'priority_weight': 10,
@@ -79,6 +79,7 @@ with DAG(
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
                                                  )
+
     dbt_run_diffs_node = PythonOperator(
                                         task_id='dbt_run_diffs'
                                         , python_callable=dbt_run_diffs,
@@ -93,4 +94,4 @@ with DAG(
     )
 
 
-data_dog_log >> copy_cp_gfgh_product_import >> copy_GFGH_DATA_cp_import >>dbt_run_diffs_node>> data_dog_log_final
+data_dog_log >>copy_cp_gfgh_product_import >> copy_GFGH_DATA_cp_import >>dbt_run_diffs_node>> data_dog_log_final

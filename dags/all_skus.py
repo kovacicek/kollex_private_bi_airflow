@@ -86,7 +86,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
 
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',
@@ -145,10 +145,10 @@ with DAG(
                                                                     , 'mysql_tables_to_copy': 'pim_catalog_product'
                                                                     , 'mysql_schema': 'akeneo'
                                                                     , 'unique_column':'id'
-                                                                    , 'delta_load' :'UPSERT'
+                                                                    , 'delta_load' :'FULL_RELOAD'
                                                                     , 'timestamp_column':'updated'
                                                                     , 'look_back_period' : 0
-                                                                    , 'chunksize_to_use':10000}
+                                                                    , 'chunksize_to_use':2000}
                                                         , retries=5)
     copy_PIM_CATALOUG_PRODUCT_model_from_mySQL = PythonOperator(task_id='copy_PIM_CATALOUG_PRODUCT_model_from_mySQL'
                                                         , python_callable=My_SQL_to_Postgres,
@@ -158,7 +158,7 @@ with DAG(
                                                                     , 'mysql_schema': 'akeneo'
                                                                     , 'timestamp_column':'updated'
                                                                     , 'unique_column':'id'
-                                                                    , 'delta_load' :'UPSERT'
+                                                                    , 'delta_load' :'FULL_RELOAD'
                                                                     , 'look_back_period' : 0
                                                                      ,'chunksize_to_use':10000}
                                                          , retries=5)
@@ -170,7 +170,7 @@ with DAG(
                                                                     , 'timestamp_column':'updated_at'
                                                                     , 'mysql_schema': 'gfghdata'
                                                                     , 'unique_column':'id'
-                                                                    , 'delta_load' :'UPSERT'
+                                                                    , 'delta_load' :'FULL_RELOAD'
                                                                     , 'look_back_period' : 0
                                                                     , 'chunksize_to_use':10000}
                                                         , retries=5)

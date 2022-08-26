@@ -85,6 +85,7 @@ with DAG(
                                         , python_callable=dbt_run_diffs,
                                         trigger_rule='all_success'
                                         ) 
+  
     data_dog_log_final = BashOperator(
 
         task_id='finished_Diffs_DAG',

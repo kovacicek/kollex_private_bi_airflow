@@ -20,30 +20,22 @@ def Name_matching():
   pg_schema = Variable.get("PG_RAW_SCHEMA")
 
   pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-  pg_engine = create_engine(f"{pg_connect_string}", echo=False)
+  pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=36000)
   chunk_size = 2000  # environ.get('CHUNK_SIZE')
 
 
-  mysql_host =Variable.get("MYSQL_HOST")
-  mysql_port = Variable.get("MYSQL_PORT")
-  mysql_user =Variable.get("MYSQL_USERNAME")
 
-  mysql_password =Variable.get("MYSQL_PASSWORD")
-  mysql_schema=Variable.get("MYSQL_DATABASE")
-  # mysql_tables_to_copy = 
-  mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
-  mysql_engine = create_engine(f"{mysql_connect_string}", echo=False)
 
 
   df_product = pd.read_sql("""
-                                    select  
-                                      name as name_allskus
-                                    ,identifier
-                                    
-                                      , base_unit_content::text as "base_unit_content_allskus"
-                                      , no_of_base_units::text  as "no_of_base_units_allskus"
+                                    select concat( title , ' ' , brand , ' ' , amount_single_unit , 'x' , net_content_liter ) as name_allskus
+                                          , identifier
 
-                                    from prod_raw_layer.all_skus
+                                          , base_unit_content::text         as "base_unit_content_allskus"
+                                          , no_of_base_units::text          as "no_of_base_units_allskus"
+
+                                        from prod_raw_layer.all_skus
+                                        
                            """
  , con=pg_engine)
 
@@ -83,7 +75,7 @@ def Name_matching():
                                                       fuzz.ratio \
                                                               (x['name_allskus'] \
                                                             ,  x['name']), axis=1)
-      df_product_joined = df_product_joined[(df_product_joined['name_similarity']>= 75)]
+      df_product_joined = df_product_joined[(df_product_joined['name_similarity']>= 70)]
 
       print("finished name_similarity ")
       df_product_joined['base_unit_content_similarity'] = df_product_joined.apply(lambda x: \
@@ -110,10 +102,7 @@ def Name_matching():
                                       , 'gfgh_id'
                                       , 'name'
                                       , 'name_similarity'],inplace=True)
-
-      df_to_write = pd.concat([df_to_write,df_product_joined],axis=0)
-
-  df_to_write.columns = ['name_all_skus'
+      df_product_joined.columns = ['name_all_skus'
                         ,'Golden_record'
                         ,'base_unit_content_allskus'
                         ,'no_of_base_units_allskus'
@@ -125,7 +114,14 @@ def Name_matching():
                         ,'name_similarity'
                         ,'base_unit_content_similarity'
                         ,'no_base_units_similarity']
+      if (chunk_num == 0):
+        df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='replace',index=False)
+      else :
+        df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='append',index=False)
 
-  df_to_write.to_sql('result_name_matching',pg_engine,schema=pg_schema, if_exists='replace',index=False)
+      print(df_product_joined.shape[0])
+  
+      print("finished writing to the Database ")
 
-  print("finished writing to the Database ")
+
+  

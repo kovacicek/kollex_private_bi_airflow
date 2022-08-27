@@ -63,52 +63,114 @@ def run_delta_load():
     ########################################################################
     ################################ Reading the product tables from Akeneo
     df_product = pd.read_sql("""
-                                        select distinct pcp.*
-                                                , pcp.raw_values                                     raw_values_product
-                                                , pcpm.raw_values                                    raw_values_model
-                                                , pcft.label                       as                family
-                                                , sku
-                                                , base_unit_content
-                                                , base_unit_content_uom
-                                                , no_of_base_units
-                                                , gtin
-                                                , kollex_active
-                                                , manufacturer
-                                                , sales_unit_pkgg
-                                                , name
-                                                ,pcpm.code as l1_code
-                                                , case when active is null then 0 else active end as "active"
+                                       
+                                       select gfghproduct.sku
+                                            , base_unit_content
+                                            , base_unit_content_uom
+                                            , no_of_base_units
+                                            , gtin
+                                            , kollex_active
+                                            , manufacturer
+                                            , refund_value
+                                            , sales_unit_pkgg
+                                            , name
+                                            , active
+                                            , category_code
+                                            , direct_shop_release
+                                                ,pcp.identifier
+                                            ,replace(coalesce( json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
+                                                , json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as title
+                                        , replace(coalesce( pcpm.code , pcpm2.code ),'"','') as base_code
+                                        
+                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            ) as brand
+                                            
+                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ))   ,'"',''       ) as gtin_single_unit
+                                        
+                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ) ,'"',''       ) as manufacturer_name
+                                            
+                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values ,'$.detail_type_single_unit."<all_channels>"."<all_locales>"' )
+                                                    , json_extract( pcp.raw_values ,  '$.detail_type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )  as detail_type_single_unit
+                                        
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
+                                                , json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content
+                                        ,  replace(coalesce(
+                                                    json_extract( pcpm.raw_values ,  '$.release_l1."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.release_l1."<all_channels>"."<all_locales>"' )
+                                                ,   json_extract( pcp.raw_values ,   '$.release_l1."<all_channels>"."<all_locales>"' )  ),'"','' ) as release_l1
+
+                                        ,  replace(coalesce(  json_extract( pcpm.raw_values , '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values ,'$.foto_release_hash."<all_channels>"."<all_locales>"' )
+                                                ,      json_extract( pcp.raw_values ,  '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ),'"','' ) as foto_release_hash
+                                        
+                                            , replace(coalesce(  json_extract( pcpm.raw_values , '$.amount_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values ,'$.amount_single_unit."<all_channels>"."<all_locales>"' )
+                                                ,      json_extract( pcp.raw_values ,  '$.amount_single_unit."<all_channels>"."<all_locales>"' )),'"','' ) as amount_single_unit
+                                        
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.status_base."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.status_base."<all_channels>"."<all_locales>"' )  ),'"','' ) as status_base
+                                            
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_uom."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.net_content_uom."<all_channels>"."<all_locales>"' ),
+                                                    json_extract( pcp.raw_values ,   '$.net_content_uom."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content_uom
+                                        
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_liter."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.net_content_liter."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content_liter
+                                        
+                                            , replace(coalesce( json_extract( pcpm.raw_values ,  '$.contact_info."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.contact_info."<all_channels>"."<all_locales>"' ) ),'"','' ) as contact_info
+                                            
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )),'"','' ) as golden_record_level1
+                                            
+                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcp.raw_values ,   '$.type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' ) as type_packaging_unit
+                                        
+                                        ,  replace(coalesce( json_extract( pcpm.raw_values , '$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values ,'$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcp.raw_values ,  '$.structure_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' ) as structure_packaging_unit
+                                        ,pcp.raw_values as raw_values_product
+
+                                        from akeneo.pim_catalog_product                     pcp
+                                                left join akeneo.pim_catalog_product_model pcpm
+                                                            on pcpm.id = pcp.product_model_id
+                                                left join akeneo.pim_catalog_product_model pcpm2
+                                                            on pcpm.parent_id = pcpm2.id
 
 
-                                    from (select * from akeneo.pim_catalog_product where updated >=curdate()) pcp
-                                            left join akeneo.pim_catalog_product_model pcpm
-                                                    on pcp.product_model_id = pcpm.id
-                                            left join (select max(sku)                   as sku,
-                                                            MAX(base_unit_content)     as base_unit_content,
-                                                            MAX(base_unit_content_uom) as base_unit_content_uom,
-                                                            MAX(no_of_base_units)         no_of_base_units,
-                                                            MAX(gtin)                  as gtin,
+                                                left join (select max(sku)                   as sku,
+                                                                MAX(base_unit_content)     as base_unit_content,
+                                                                MAX(base_unit_content_uom) as base_unit_content_uom,
+                                                                MAX(no_of_base_units)         no_of_base_units,
+                                                                MAX(gtin)                  as gtin,
 
-                                                            MAX(kollex_active)         as kollex_active,
-                                                            MAX(manufacturer)          as manufacturer,
+                                                                MAX(kollex_active)         as kollex_active,
+                                                                MAX(manufacturer)          as manufacturer,
 
 
-                                                            MAX(refund_value)          as refund_value,
+                                                                MAX(refund_value)          as refund_value,
 
 
-                                                            MAX(sales_unit_pkgg)       as sales_unit_pkgg,
-                                                            MAX(name)                  as name,
-                                                            MAX(active)                as active,
-                                                            MAX(category_code)            category_code,
+                                                                MAX(sales_unit_pkgg)       as sales_unit_pkgg,
+                                                                MAX(name)                  as name,
+                                                                MAX(active)                as active,
+                                                                MAX(category_code)            category_code,
 
-                                                            MAX(direct_shop_release)      direct_shop_release
+                                                                MAX(direct_shop_release)      direct_shop_release
 
-                                                        from gfghdata.product
-                                                        where sku is not null
-                                                        group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
-                                    left join akeneo.pim_catalog_family_translation pcft on pcp.family_id =  pcft.foreign_key
+                                                            from gfghdata.product
+                                                            where sku is not null
+                                                            group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
+                                                left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
+                                        where pcp.updated >= '2022-08-20'
     """, con=mysql_engine)
-
+    print(df_product)
     if df_product.size ==0 :
         print('no changed SKUs, finishing processing')
         return
@@ -190,222 +252,6 @@ def run_delta_load():
     # extracting values from the JSON for each SKU from product and product model JSON fields raw_values
 
 
-    chunk['manufacturer_name'] = chunk['raw_values_model'].apply(lambda x: '|'+json.loads(x)
-                                                                            .get('manufacturer_name')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>')+"|" if x is not None and json.loads(x)
-                                                                                                        .get('manufacturer_name') is not None 
-                                                                            else None)
-    chunk['manufacturer_name_2'] = chunk['raw_values_product'].apply(lambda x: '|'+json.loads(x)
-                                                                            .get('manufacturer_name')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>')+"|" if x is not None and json.loads(x)
-                                                                                                        .get('manufacturer_name') is not None 
-                                                                            else None)
-    chunk['manufacturer_name_fixtest'] = chunk['raw_values_model'].apply(lambda x: '|'+json.loads(x)
-                                                                            .get('manufacturer_name')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>')+"|" if x is not None and json.loads(x)
-                                                                                                        .get('manufacturer_name') is not None 
-                                                                            else None)
-    chunk['amount_single_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('amount_single_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('amount_single_unit') is not None 
-                                                                            else None)
-    chunk['type_single_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('type_single_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('type_single_unit') is not None 
-                                                                            else None)
-    chunk['golden_record_level1'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('golden_record_level1')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('golden_record_level1') is not None 
-                                                                            else None)
-    chunk['shop_enabled'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('shop_enabled')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('shop_enabled') is not None 
-                                                                            else None)
-    chunk['base_code'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('shop_enabled')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('code') is not None 
-                                                                            else None)
-    chunk['gtin_single_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('gtin_single_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('gtin_single_unit') is not None 
-                                                                            else None)
-    chunk['gtin_packaging_unit'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('gtin_packaging_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('gtin_packaging_unit') is not None 
-                                                                            else None)
-    chunk['detail_type_single_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('detail_type_single_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('detail_type_single_unit') is not None 
-                                                                            else None)
-    chunk['detail_type_packaging_unit'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('detail_type_packaging_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('detail_type_packaging_unit') is not None 
-                                                                            else None)
-
-    chunk['release_l1'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('release_l1')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('release_l1') is not None 
-                                                                            else None)
-    chunk['foto_release_hash'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('foto_release_hash')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('foto_release_hash') is not None 
-                                                                            else None)
-
-
-    chunk['shop_enabled'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('shop_enabled')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('shop_enabled') is not None 
-                                                                            else None)
-
-
-    chunk['status_base'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('status_base')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('status_base') is not None 
-                                                                            else None)
-    chunk['is_manual'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('code')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('code') is not None 
-                                                                            else None)
-
-
-
-    chunk['is_manual'] = chunk['is_manual'].apply(lambda x: True if x is not None and 'm-' in x else False)
-
-
-
-    chunk['contact_info'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('contact_info')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('contact_info') is not None 
-                                                                            else None)
-
-    chunk['net_content_uom'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content_uom')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content_uom') is not None 
-                                                                            else None)
-    chunk['structure_packaging_unit'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('structure_packaging_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('structure_packaging_unit') is not None 
-                                                                            else None)
-
-    chunk['title'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('brand_and_title')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('brand_and_title') is not None 
-                                                                            else None)
-
-    chunk['brand'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('brand_and_title')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('brand_and_title') is not None 
-                                                                            else None)
-    chunk['net_content'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content') is not None 
-                                                                            else None)
-
-
-    chunk['net_content_liter'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content_liter')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content_liter') is not None 
-                                                                            else None)
-
-
-    chunk['contact_info_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('contact_info')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('contact_info') is not None 
-                                                                            else None)
-
-
-    chunk['net_content_uom_2'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content_uom')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content_uom') is not None 
-                                                                            else None)
-
-
-    
-    chunk['title_2'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('title')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('title') is not None 
-                                                                            else None)
-
-
-    chunk['brand_2'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('brand')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('brand') is not None 
-                                                                            else None)
-    chunk['net_content_2'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content') is not None 
-                                                                            else None)
-    chunk['net_content_liter_2'] = chunk['raw_values_model'].apply(lambda x: json.loads(x)
-                                                                            .get('net_content_liter')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if x is not None and json.loads(x)
-                                                                                                        .get('net_content_liter') is not None 
-                                                                            else None)                                                                            
-
-
-
-
-    chunk['type_packaging_unit'] = chunk['raw_values_product'].apply(lambda x: json.loads(x)
-                                                                            .get('type_packaging_unit')
-                                                                            .get('<all_channels>')
-                                                                            .get('<all_locales>') if json.loads(x)
-                                                                                                        .get('type_packaging_unit') is not None 
-                                                                            else None)
     print("Finished Extracting JSON Values from table")
     # print(chunk['type_packaging_unit'])
     # chunk.to_excel('chunk_dump.xlsx')
@@ -416,11 +262,11 @@ def run_delta_load():
     ###################################################################################################################
     ############################## Consolidating Values of Title,Brand,Net_content_liter,Contact_info into one column
     #print("Consolidating Those columns")
-    chunk['title'] = chunk['title'].combine_first(chunk['title_2'])
-    chunk['net_content'] = chunk['net_content'].combine_first(chunk['net_content_2'])
-    chunk['brand'] = chunk['brand'].combine_first(chunk['brand_2'])
-    chunk['net_content_liter'] = chunk['net_content_liter'].combine_first(chunk['net_content_liter_2'])
-    chunk['contact_info'] = chunk['contact_info'].combine_first(chunk['contact_info_2'])
+    # chunk['title'] = chunk['title'].combine_first(chunk['title_2'])
+    # chunk['net_content'] = chunk['net_content'].combine_first(chunk['net_content_2'])
+    # chunk['brand'] = chunk['brand'].combine_first(chunk['brand_2'])
+    # chunk['net_content_liter'] = chunk['net_content_liter'].combine_first(chunk['net_content_liter_2'])
+    # chunk['contact_info'] = chunk['contact_info'].combine_first(chunk['contact_info_2'])
 
     chunk.drop(['title_2','net_content_2','brand_2','net_content_liter_2','contact_info_2'],axis=1,inplace=True,errors='ignore')
     print("finished Consolidating Those columns")

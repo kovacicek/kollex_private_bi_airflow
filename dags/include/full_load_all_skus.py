@@ -223,7 +223,7 @@ def run_full_load():
         print("######################################Processing Chunk Number "+str(count))
         
         
-
+        print(chunk['title'])
 
         
 

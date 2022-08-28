@@ -384,7 +384,7 @@ def run_full_load():
         chunk.to_sql(pg_tables_to_use, pg_engine,schema=pg_schema, if_exists='append',index=False)
         
         print("##############Finished Writing to the DWH#############")
-        print(chunk.head())
+        print(chunk['title'])
         count+=1
     pg_engine.dispose()
     mysql_engine.dispose()

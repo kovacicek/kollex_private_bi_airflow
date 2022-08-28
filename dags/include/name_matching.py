@@ -54,7 +54,7 @@ def Name_matching():
 
 
 
-  CHUNK_SIZE = 100
+  CHUNK_SIZE = 20
   df_to_write = pd.DataFrame()
   for chunk_num in range(len(products_to_identify) // CHUNK_SIZE + 1):
       start_index = chunk_num*CHUNK_SIZE

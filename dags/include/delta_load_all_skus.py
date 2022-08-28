@@ -64,7 +64,7 @@ def run_delta_load():
     ################################ Reading the product tables from Akeneo
     df_product = pd.read_sql("""
                                        
-                                       select gfghproduct.sku
+                                        select gfghproduct.sku
                                             , base_unit_content
                                             , base_unit_content_uom
                                             , no_of_base_units
@@ -77,65 +77,65 @@ def run_delta_load():
                                             , active
                                             , category_code
                                             , direct_shop_release
-                                                ,pcp.identifier
-                                            ,replace(coalesce( json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
-                                                , json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as title
-                                        , replace(coalesce( pcpm.code , pcpm2.code ),'"','') as base_code
+                                            ,pcp.identifier
+                                            ,cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
+                                                        , json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as char) as title
+                                            , cast(replace(coalesce( pcpm.code , pcpm2.code ),'"','')as char) as base_code
+                                    
+                                            , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            )as char) as brand
                                         
-                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            ) as brand
-                                            
-                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ))   ,'"',''       ) as gtin_single_unit
+                                             , cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ))   ,'"',''       )as char) as gtin_single_unit
+                                    
+                                              , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ) ,'"',''       )as char) as manufacturer_name
                                         
-                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ) ,'"',''       ) as manufacturer_name
-                                            
-                                        , replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_single_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values ,'$.detail_type_single_unit."<all_channels>"."<all_locales>"' )
-                                                    , json_extract( pcp.raw_values ,  '$.detail_type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )  as detail_type_single_unit
-                                        
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
-                                                , json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content
-                                        ,  replace(coalesce(
-                                                    json_extract( pcpm.raw_values ,  '$.release_l1."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.release_l1."<all_channels>"."<all_locales>"' )
-                                                ,   json_extract( pcp.raw_values ,   '$.release_l1."<all_channels>"."<all_locales>"' )  ),'"','' ) as release_l1
+                                             , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values ,'$.detail_type_single_unit."<all_channels>"."<all_locales>"' )
+                                                ,       json_extract( pcp.raw_values ,  '$.detail_type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )as char)  as detail_type_single_unit
+                                    
+                                            , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
+                                                    ,   json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content
+                                            ,  cast(replace(coalesce(
+                                                json_extract( pcpm.raw_values ,  '$.release_l1."<all_channels>"."<all_locales>"' ) ,
+                                                json_extract( pcpm2.raw_values , '$.release_l1."<all_channels>"."<all_locales>"' )
+                                            ,   json_extract( pcp.raw_values ,   '$.release_l1."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as release_l1
 
-                                        ,  replace(coalesce(  json_extract( pcpm.raw_values , '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values ,'$.foto_release_hash."<all_channels>"."<all_locales>"' )
-                                                ,      json_extract( pcp.raw_values ,  '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ),'"','' ) as foto_release_hash
+                                         ,  cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values ,'$.foto_release_hash."<all_channels>"."<all_locales>"' )
+                                            ,             json_extract( pcp.raw_values ,  '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as foto_release_hash
+                                    
+                                          , cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.amount_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values ,'$.amount_single_unit."<all_channels>"."<all_locales>"' )
+                                            ,                json_extract( pcp.raw_values ,  '$.amount_single_unit."<all_channels>"."<all_locales>"' )),'"','' )as char) as amount_single_unit
+                                    
+                                          , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.status_base."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.status_base."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as status_base
                                         
-                                            , replace(coalesce(  json_extract( pcpm.raw_values , '$.amount_single_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values ,'$.amount_single_unit."<all_channels>"."<all_locales>"' )
-                                                ,      json_extract( pcp.raw_values ,  '$.amount_single_unit."<all_channels>"."<all_locales>"' )),'"','' ) as amount_single_unit
+                                           ,  cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_uom."<all_channels>"."<all_locales>"' ) ,
+                                                              json_extract( pcpm2.raw_values , '$.net_content_uom."<all_channels>"."<all_locales>"' ),
+                                                                json_extract( pcp.raw_values ,   '$.net_content_uom."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content_uom
+                                    
+                                          , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_liter."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.net_content_liter."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content_liter
+                                    
+                                        , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.contact_info."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values , '$.contact_info."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as contact_info
                                         
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.status_base."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.status_base."<all_channels>"."<all_locales>"' )  ),'"','' ) as status_base
-                                            
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_uom."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.net_content_uom."<all_channels>"."<all_locales>"' ),
-                                                    json_extract( pcp.raw_values ,   '$.net_content_uom."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content_uom
+                                    , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )),'"','' )as char) as golden_record_level1
                                         
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_liter."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.net_content_liter."<all_channels>"."<all_locales>"' ) ),'"','' ) as net_content_liter
-                                        
-                                            , replace(coalesce( json_extract( pcpm.raw_values ,  '$.contact_info."<all_channels>"."<all_locales>"' ) ,
-                                                        json_extract( pcpm2.raw_values , '$.contact_info."<all_channels>"."<all_locales>"' ) ),'"','' ) as contact_info
-                                            
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )),'"','' ) as golden_record_level1
-                                            
-                                        , replace(coalesce( json_extract( pcpm.raw_values ,  '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcp.raw_values ,   '$.type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' ) as type_packaging_unit
-                                        
-                                        ,  replace(coalesce( json_extract( pcpm.raw_values , '$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values ,'$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcp.raw_values ,  '$.structure_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' ) as structure_packaging_unit
-                                        ,pcp.raw_values as raw_values_product
+                                    , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values , '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcp.raw_values ,   '$.type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as type_packaging_unit
+                                    
+                                    ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcpm2.raw_values ,'$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                        json_extract( pcp.raw_values ,  '$.structure_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as structure_packaging_unit
+                                    ,pcp.raw_values as raw_values_product
 
                                         from akeneo.pim_catalog_product                     pcp
                                                 left join akeneo.pim_catalog_product_model pcpm
@@ -168,7 +168,7 @@ def run_delta_load():
                                                             where sku is not null
                                                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                                                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
-                                        where pcp.updated >= '2022-08-20'
+                                        where pcp.updated >= curdate()
     """, con=mysql_engine)
     print(df_product)
     if df_product.size ==0 :

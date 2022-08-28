@@ -60,77 +60,80 @@ def Name_matching():
   CHUNK_SIZE = 50
   df_to_write = pd.DataFrame()
   for chunk_num in range(len(products_to_identify) // CHUNK_SIZE + 1):
-      start_index = chunk_num*CHUNK_SIZE
-      end_index = min(chunk_num*CHUNK_SIZE + CHUNK_SIZE, len(df_product))
-      chunk = products_to_identify[start_index:end_index]
+    start_index = chunk_num*CHUNK_SIZE
+    end_index = min(chunk_num*CHUNK_SIZE + CHUNK_SIZE, len(df_product))
+    chunk = products_to_identify[start_index:end_index]
 
 
-      # .. do calculaton on chunk here ..
-      print(str(start_index)+"  "+str(end_index))
-      df_product_joined = df_product.merge(chunk,how='cross')
+    # .. do calculaton on chunk here ..
+    print(str(start_index)+"  "+str(end_index))
+    df_product_joined = df_product.merge(chunk,how='cross')
 
 
-      print("finished getting all SKUs from DB")
+    print("finished getting all SKUs from DB")
 
 
 
-      df_product_joined['name_similarity'] = df_product_joined.apply(lambda x: \
-                                                      fuzz.ratio \
-                                                              (x['name_allskus'] \
-                                                            ,  x['name']), axis=1)
-      df_product_joined = df_product_joined[(df_product_joined['name_similarity']>= 70)]
+    df_product_joined['name_similarity'] = df_product_joined.apply(lambda x: \
+                                                    fuzz.ratio \
+                                                            (x['name_allskus'] \
+                                                          ,  x['name']), axis=1)
+    df_product_joined = df_product_joined[(df_product_joined['name_similarity']>= 70)]
 
-      print("finished name_similarity ")
-      df_product_joined['base_unit_content_similarity'] = df_product_joined.apply(lambda x: \
-                                                                    fuzz.token_set_ratio
-                                                                    ( 
-                                                                      str(x['base_unit_content_allskus'])\
-                                                                    ,str( x['base_unit_content']))\
-                                                                    , axis=1)
+    print("finished name_similarity and size is "+str(len(df_product_joined.index)))
+    if (len(df_product_joined.index)==0):
+      continue
+    df_product_joined['base_unit_content_similarity'] = df_product_joined.apply(lambda x: \
+                                                                  fuzz.token_set_ratio
+                                                                  ( 
+                                                                    str(x['base_unit_content_allskus'])\
+                                                                  ,str( x['base_unit_content']))\
+                                                                  , axis=1)
 
-      print("finished base_unit_content_similarity ")
-      if (df_product_joined.empty):
-        continue
-      df_product_joined['no_base_units_similarity'] = df_product_joined.apply(lambda x: \
-                                                                fuzz.token_set_ratio(\
-                                                                  str(x['no_of_base_units_allskus'])\
-                                                                ,str (x['no_of_base_units']))\
-                                                                , axis=1)
-      print("finished no_base_units_similarity ")
+    print("finished base_unit_content_similarity and size is "+str(len(df_product_joined.index)))
+    if (len(df_product_joined.index)==0):
+      continue
+    df_product_joined['no_base_units_similarity'] = df_product_joined.apply(lambda x: \
+                                                              fuzz.token_set_ratio(\
+                                                                str(x['no_of_base_units_allskus'])\
+                                                              ,str (x['no_of_base_units']))\
+                                                              , axis=1)
+    print("finished no_base_units_similarity and size is "+str(len(df_product_joined.index)))
 
-      if (df_product_joined.empty):
-        
-        continue
-      df_product_joined = df_product_joined[    (df_product_joined['base_unit_content_similarity']>= 100) \
-                              &   (df_product_joined['no_base_units_similarity']>= 100) ]
+    if (len(df_product_joined.index)==0):
+      
+      continue
+    df_product_joined = df_product_joined[    (df_product_joined['base_unit_content_similarity']>= 100) \
+                            &   (df_product_joined['no_base_units_similarity']>= 100) ]
 
-      df_product_joined.drop_duplicates(subset=['name_allskus'
-                                      , 'identifier'
-                                      , 'gfgh_id'
-                                      , 'name'
-                                      , 'name_similarity'],inplace=True)
-      df_product_joined.columns = ['name_all_skus'
-                        ,'Golden_record'
-                        ,'base_unit_content_allskus'
-                        ,'no_of_base_units_allskus'
-                        ,'gfgh_id'
-                        ,'name_gfgh'
-                        ,'no_of_base_units_gfgh'
-                        ,'base_unit_content_gfgh'
-                        ,'structure_packaging_unit_gfgh'
-                        ,'name_similarity'
-                        ,'base_unit_content_similarity'
-                        ,'no_base_units_similarity']
+    df_product_joined.drop_duplicates(subset=['name_allskus'
+                                    , 'identifier'
+                                    , 'gfgh_id'
+                                    , 'name'
+                                    , 'name_similarity'],inplace=True)
+    df_product_joined.columns = ['name_all_skus'
+                      ,'Golden_record'
+                      ,'base_unit_content_allskus'
+                      ,'no_of_base_units_allskus'
+                      ,'gfgh_id'
+                      ,'name_gfgh'
+                      ,'no_of_base_units_gfgh'
+                      ,'base_unit_content_gfgh'
+                      ,'structure_packaging_unit_gfgh'
+                      ,'name_similarity'
+                      ,'base_unit_content_similarity'
+                      ,'no_base_units_similarity']
 
-      if (df_product_joined.empty):
-        continue
+    if (len(df_product_joined.index)==0):
+      continue
 
 
-      df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='append',index=False)
+    df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='append',index=False)
 
-      print(df_product_joined.shape[0])
-  
-      print("finished writing to the Database ")
+    print(df_product_joined.shape[0])
+
+    print("finished writing to the Database ")
+
 
 
   

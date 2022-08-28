@@ -82,9 +82,9 @@ def run_full_load():
                                             , category_code
                                             , direct_shop_release
                                                 ,pcp.identifier
-                                            ,replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
-                                                                json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
-                                                              , json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as title
+                                             ,cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
+                                                                        json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
+                                                                    , json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as char) as title
                                         , replace(coalesce( pcpm.code , pcpm2.code ),'"','') as base_code
                                         
                                         , replace(coalesce( json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,

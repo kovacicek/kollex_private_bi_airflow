@@ -24,6 +24,9 @@ def Name_matching():
   chunk_size = 2000  # environ.get('CHUNK_SIZE')
 
 
+  connection = pg_engine.connect()
+
+  connection.execute(f"drop table if exists {pg_schema}.result_name_matching;")
 
 
 
@@ -54,7 +57,7 @@ def Name_matching():
 
 
 
-  CHUNK_SIZE = 20
+  CHUNK_SIZE = 50
   df_to_write = pd.DataFrame()
   for chunk_num in range(len(products_to_identify) // CHUNK_SIZE + 1):
       start_index = chunk_num*CHUNK_SIZE
@@ -86,6 +89,8 @@ def Name_matching():
                                                                     , axis=1)
 
       print("finished base_unit_content_similarity ")
+      if (df_product_joined.empty):
+        continue
       df_product_joined['no_base_units_similarity'] = df_product_joined.apply(lambda x: \
                                                                 fuzz.token_set_ratio(\
                                                                   str(x['no_of_base_units_allskus'])\
@@ -93,7 +98,9 @@ def Name_matching():
                                                                 , axis=1)
       print("finished no_base_units_similarity ")
 
-
+      if (df_product_joined.empty):
+        
+        continue
       df_product_joined = df_product_joined[    (df_product_joined['base_unit_content_similarity']>= 100) \
                               &   (df_product_joined['no_base_units_similarity']>= 100) ]
 
@@ -114,10 +121,12 @@ def Name_matching():
                         ,'name_similarity'
                         ,'base_unit_content_similarity'
                         ,'no_base_units_similarity']
-      if (chunk_num == 0):
-        df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='replace',index=False)
-      else :
-        df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='append',index=False)
+
+      if (df_product_joined.empty):
+        continue
+
+
+      df_product_joined.to_sql('result_name_matching',pg_engine,schema='prod_raw_layer', if_exists='append',index=False)
 
       print(df_product_joined.shape[0])
   

@@ -143,6 +143,7 @@ def run_delta_load():
                                         ,pcp.raw_values as raw_values_product
 										,pcp.updated
                                        ,cast(case when pcpm2.code is null then pcpm.code else pcpm2.code end as char) as l1_code
+                                       ,pcp.created
                                         
                                         from akeneo.pim_catalog_product                     pcp
                                                 left join akeneo.pim_catalog_product_model pcpm

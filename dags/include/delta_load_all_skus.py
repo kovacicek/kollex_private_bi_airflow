@@ -97,7 +97,12 @@ def run_delta_load():
                                         , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_single_unit."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values ,'$.detail_type_single_unit."<all_channels>"."<all_locales>"' )
                                                     ,       json_extract( pcp.raw_values ,  '$.detail_type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )as char)  as detail_type_single_unit
-                                        
+
+
+                                        , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.type_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values ,'$.type_single_unit."<all_channels>"."<all_locales>"' )
+                                                    ,       json_extract( pcp.raw_values ,  '$.type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )as char)  as type_single_unit
+
                                         , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
                                                         ,   json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content
@@ -137,9 +142,24 @@ def run_delta_load():
                                         ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values ,'$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcp.raw_values ,  '$.structure_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as structure_packaging_unit
+                                        
                                         ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.shop_enabled."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values ,'$.shop_enabled."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcp.raw_values ,  '$.shop_enabled."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as shop_enabled
+                                        
+                                        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values ,'$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcp.raw_values ,  '$.gtin_single_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as gtin_single_unit
+                                            
+                                                 ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values ,'$.gtin_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcp.raw_values ,  '$.gtin_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as gtin_packaging_unit
+       
+       
+       
+                                        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcpm2.raw_values ,'$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                                                            json_extract( pcp.raw_values ,  '$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as detail_type_packaging_unit
                                         ,pcp.raw_values as raw_values_product
 										,pcp.updated
                                        ,cast(case when pcpm2.code is null then pcpm.code else pcpm2.code end as char) as l1_code

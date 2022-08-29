@@ -163,6 +163,7 @@ def run_delta_load():
                                         ,pcp.raw_values as raw_values_product
 										,pcp.updated
                                        ,cast(case when pcpm2.code is null then pcpm.code else pcpm2.code end as char) as l1_code
+                                        , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
                                        ,pcp.created
                                         
                                         from akeneo.pim_catalog_product                     pcp
@@ -337,6 +338,11 @@ def run_delta_load():
     chunk = chunk.merge(
     attribute_options, left_on='net_content_uom', right_on='code', how='left')
     chunk['net_content_uom'] =  chunk['value'].combine_first(chunk['net_content_uom'])
+    chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
+
+    chunk = chunk.merge(
+    attribute_options, left_on='type_single_unit', right_on='code', how='left')
+    chunk['type_single_unit'] =  chunk['value'].combine_first(chunk['type_single_unit'])
     chunk.drop(attribute_options.columns, inplace=True, axis=1,errors='ignore')
 
 

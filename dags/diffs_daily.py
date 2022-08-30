@@ -62,7 +62,7 @@ with DAG(
                                                          , 'mysql_schema': 'gfghdata'
                                                          , 'delta_load': 'FULL_RELOAD'
                                                          , 'unique_column': 'id'
-                                                         , 'timestamp_column': 'updated_at'
+                                                         , 'timestamp_column': 'created_at'
                                                          , 'look_back_period': 0
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
@@ -74,8 +74,8 @@ with DAG(
                                                          , 'mysql_schema': 'gfghdata'
                                                          , 'delta_load': 'INSERT_NEW_ROWS_DROP_OLD_TABLE'
                                                          , 'unique_column': 'NOT_NEEDED'
-                                                         , 'timestamp_column': 'updated_at'
-                                                         , 'look_back_period': 22 #### 22 because i want the last 3 weeks cuz it's enough
+                                                         , 'timestamp_column': 'created_at'
+                                                         , 'look_back_period': 30 #### 22 because i want the last 3 weeks cuz it's enough
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
                                                  )

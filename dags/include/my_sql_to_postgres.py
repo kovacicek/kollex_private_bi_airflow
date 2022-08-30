@@ -133,7 +133,7 @@ def My_SQL_to_Postgres(**kwargs):
             df = read_sql(f"""  select * 
                                     from {mysql_schema}.{mysql_tables_to_copy} 
                                     where   {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate())+{look_back_period} DAY
-                                    AND     {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())+1 DAY
+                                  
                                 """
                             ,  con=mysql_engine
                             , chunksize=chunksize_to_use)

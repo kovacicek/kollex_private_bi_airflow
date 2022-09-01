@@ -438,6 +438,7 @@ def run_delta_load():
     pg_tables_to_use =Variable.get("PG_ALL_SKUS")
     pg_connect_string = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
+    chunk.drop_duplicates(column='identifier',axis=1,inplace=True,errors='ignore')
 
 
     chunk.to_sql(pg_tables_to_use,

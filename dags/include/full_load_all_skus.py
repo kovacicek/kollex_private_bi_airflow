@@ -412,7 +412,7 @@ def run_full_load():
         chunk.drop('is_enabled',axis=1,inplace=True,errors='ignore')
         chunk.drop('merchant_key_id',axis=1,inplace=True,errors='ignore')
         chunk.drop('merchant_key_enabled',axis=1,inplace=True,errors='ignore')
-        chunk.drop_duplicates(subset=['identifier'],axis=1,inplace=True,errors='ignore')
+        chunk.drop_duplicates(subset=['identifier'],inplace=True)
 
         pg_tables_to_use =pg_tables_to_use
 

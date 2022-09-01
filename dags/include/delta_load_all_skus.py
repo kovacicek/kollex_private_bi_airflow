@@ -88,9 +88,7 @@ def run_delta_load():
                                         , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            )as char) as brand
                                             
-                                        , cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
-                                                            json_extract( pcpm2.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ))   ,'"',''       )as char) as gtin_single_unit
-                                        
+
                                         , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ) ,'"',''       )as char) as manufacturer_name
                                             

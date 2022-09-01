@@ -65,7 +65,7 @@ def run_delta_load():
     df_product = pd.read_sql("""
                                        
                                        
-                                       select gfghproduct.sku
+                                       select distinct gfghproduct.sku
                                             , base_unit_content
                                             , base_unit_content_uom
                                             , no_of_base_units

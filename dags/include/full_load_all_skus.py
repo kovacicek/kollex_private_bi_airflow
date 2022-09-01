@@ -69,7 +69,7 @@ def run_full_load():
     df_product = pd.read_sql("""
                                     
                                      
-                                       select gfghproduct.sku
+                                       select distinct gfghproduct.sku
                                             , base_unit_content
                                             , base_unit_content_uom
                                             , no_of_base_units
@@ -413,7 +413,6 @@ def run_full_load():
         chunk.drop('merchant_key_id',axis=1,inplace=True,errors='ignore')
         chunk.drop('merchant_key_enabled',axis=1,inplace=True,errors='ignore')
         pg_tables_to_use =pg_tables_to_use
-
 
         chunk.to_sql(pg_tables_to_use, pg_engine,schema=pg_schema, if_exists='append',index=False)
         

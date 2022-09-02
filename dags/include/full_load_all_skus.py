@@ -83,14 +83,14 @@ select distinct                               pcp.identifier
                                             , active
                                             , category_code
                                             , direct_shop_release
-                                                
+                                            
                                             
                                             ,cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
                                                                      json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
                                                             ,        json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as char) as title
                                         , cast(replace(coalesce( pcpm.code , pcpm2.code ),'"','')as char) as base_code
                                         
-                                        , cast(replace(coalesce( ,json_extract( pcp.raw_values , '$.brand."<all_channels>"."<all_locales>"' )
+                                        , cast(replace(coalesce( json_extract( pcp.raw_values , '$.brand."<all_channels>"."<all_locales>"' ),
                                                                   json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
                                                                   json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            )as char) as brand
                                             

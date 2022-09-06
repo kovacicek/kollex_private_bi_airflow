@@ -1,28 +1,9 @@
 from datetime import datetime, timedelta
-import airflow
 from airflow import DAG
-
-
-# import psycopg2
-# import csv
-import io
-#from tkinter.messagebox import QUESTION
-# import mysql.connector
-import pandas as pd
-import os
-# import numpy as np
-import time
-import io
-import csv
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
-import requests
-# from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
-from include.name_matching import Name_matching
-
-from airflow.models import Variable
-
+from include.name_matching import name_matching
 
 default_args = {
     'owner': 'airflow',
@@ -73,7 +54,7 @@ with DAG(
                                         )
     Name_Matching_Task = PythonOperator(
                                         task_id='Name_Matching_Task'
-                                        , python_callable=Name_matching,
+                                        , python_callable=name_matching,
                                         trigger_rule='all_success'
                                         ) 
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')

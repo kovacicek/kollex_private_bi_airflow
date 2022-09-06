@@ -43,7 +43,7 @@ default_args = {
 with DAG(
     dag_id="diffs_daily",
     start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 17-18/1 * * *",
+    schedule_interval="0 9 * * *",
     concurrency=100,
     catchup=False
 ) as dag:

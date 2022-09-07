@@ -109,9 +109,9 @@ select distinct                               pcp.identifier
                                                             json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
                                                         ,   json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content
                                         ,  cast(replace(coalesce(
-                                                    json_extract( pcpm.raw_values ,  '$.release_l1."<all_channels>"."<all_locales>"' ) ,
-                                                    json_extract( pcpm2.raw_values , '$.release_l1."<all_channels>"."<all_locales>"' )
-                                                ,   json_extract( pcp.raw_values ,   '$.release_l1."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as release_l1
+                                                    json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
+                                                    json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )
+                                                ,   json_extract( pcp.raw_values ,   '$.golden_record_level1."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as release_l1
 
                                         ,  cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ,
                                                             json_extract( pcpm2.raw_values ,'$.foto_release_hash."<all_channels>"."<all_locales>"' )
@@ -171,8 +171,12 @@ select distinct                               pcp.identifier
                                                             json_extract( pcp.raw_values ,  '$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as detail_type_packaging_unit
                                         ,pcp.raw_values as raw_values_product
 										,pcp.updated
-                                       ,cast(case when pcpm2.code is null then pcpm.code else pcpm2.code end as char) as l1_code
-                                        , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
+                                       ,cast(case
+                                           when pcpm2.code is null
+                                               then pcpm.code
+                                           else pcpm2.code
+                                           end as char) as l1_code
+                                    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
 
                                        ,pcp.created
                                         
@@ -207,7 +211,7 @@ select distinct                               pcp.identifier
                                                             where sku is not null
                                                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                                                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
-                                        where pcp.updated >= curdate()
+                                        
     """, con=mysql_engine)
     print(df_product)
     if df_product.size ==0 :

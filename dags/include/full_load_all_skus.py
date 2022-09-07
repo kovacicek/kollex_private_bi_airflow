@@ -87,7 +87,7 @@ def run_full_load():
                                             ,cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
                                                                      json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
                                                             ,        json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as char) as title
-                                        , cast(replace(coalesce( pcpm.code , pcpm2.code ),'"','')as char) as base_code
+                                        , cast(replace(coalesce( pcpm.code , pcpm2.code ),'"','')as char) as l1_code
                                         
                                         , cast(replace(coalesce( json_extract( pcp.raw_values , '$.brand."<all_channels>"."<all_locales>"' ),
                                                                   json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
@@ -178,7 +178,7 @@ def run_full_load():
                                            when pcpm2.code is null
                                                then pcpm.code
                                            else pcpm2.code
-                                           end as char) as l1_code
+                                           end as char) as base_code
                                     , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
 
                                        ,pcp.created

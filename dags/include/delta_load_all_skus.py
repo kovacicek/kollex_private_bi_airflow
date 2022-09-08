@@ -432,9 +432,9 @@ select distinct                               pcp.identifier
     sorted_merchants = merchants_active.sort_values('merchant_key')
     sorted_merchants = sorted_merchants[sorted_merchants['merchant_key']!='merchant_key']
     for merchant in sorted_merchants:
-    # chunk[str(merchant)] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
+        chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
         chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None)
-        chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
+        chunk[str(merchant)+'_freigabe'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
     ##print(merchant)
     print("finished creating merchant Columns")
     #################################    

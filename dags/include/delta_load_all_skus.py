@@ -211,6 +211,7 @@ select distinct                               pcp.identifier
                                                             where sku is not null
                                                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                                                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
+                                                where pcp.updated >= current_date
                                         
     """, con=mysql_engine)
     print(df_product)

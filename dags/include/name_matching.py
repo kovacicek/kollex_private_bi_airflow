@@ -38,11 +38,9 @@ def name_matching():
                                              con=pg_engine)
 
     chunk_size = 50
-    for chunk_num in range(len(products_to_identify) // chunk_size + 1):
+    for chunk_num, chunk in enumerate(products_to_identify):
         start_index = chunk_num * chunk_size
         end_index = min(chunk_num * chunk_size + chunk_size, len(df_product))
-        chunk = products_to_identify[start_index:end_index]
-
         # .. do calculaton on chunk here ..
         print(str(start_index) + "  " + str(end_index))
         df_product_joined = df_product.merge(chunk, how='cross')
@@ -50,13 +48,13 @@ def name_matching():
 
         df_product_joined['name_similarity'] = df_product_joined.apply(
             lambda x:
-            fuzz.ratio(
+            fuzz.token_set_ratio(
                 x['name_allskus'],
                 x['name']
             ),
             axis=1)
         df_product_joined = df_product_joined[
-            df_product_joined['name_similarity'] >= 70
+            df_product_joined['name_similarity'] >= 81
             ]
 
         print("finished name_similarity and size is " + str(

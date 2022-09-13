@@ -15,12 +15,9 @@ def name_matching():
     pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     pg_engine = create_engine(f"{pg_connect_string}", echo=False,
                               pool_pre_ping=True, pool_recycle=36000)
-
     connection = pg_engine.connect()
-
     connection.execute(
         f"drop table if exists {pg_schema}.result_name_matching;")
-
     df_product = pd.read_sql("""
                                     select concat( title , ' ' , brand , ' ' , amount_single_unit , 'x' , net_content_liter ) as name_allskus
                                           , identifier
@@ -32,12 +29,12 @@ def name_matching():
 
                            """
                              , con=pg_engine)
-
-    products_to_identify = pd.read_sql_table('input_data_for_name_matching',
-                                             schema='sheet_loader',
-                                             con=pg_engine)
-
     chunk_size = 50
+    products_to_identify = pd.read_sql_table(table_name='input_data_for_name_matching',
+                                             schema='sheet_loader',
+                                             con=pg_engine,
+                                             chunksize=chunk_size)
+
     for chunk_num, chunk in enumerate(products_to_identify):
         start_index = chunk_num * chunk_size
         end_index = min(chunk_num * chunk_size + chunk_size, len(df_product))
@@ -54,7 +51,7 @@ def name_matching():
             ),
             axis=1)
         df_product_joined = df_product_joined[
-            df_product_joined['name_similarity'] >= 81
+            df_product_joined['name_similarity'] >= 80
             ]
 
         print("finished name_similarity and size is " + str(

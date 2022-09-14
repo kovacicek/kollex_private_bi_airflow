@@ -76,7 +76,7 @@ def branch_on():
     now = datetime.now()
 
 
-    trigger = now.replace(hour=17, minute=30, second=0, microsecond=0)
+    trigger = now.replace(hour=11, minute=30, second=0, microsecond=0)
     d.strftime('%H:%M %p')
 
     if (d > trigger):

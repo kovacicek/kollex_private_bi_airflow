@@ -70,14 +70,27 @@ def branch_on():
     merchants_active_count= pd.read_sql_table('current_merchant_active_count', con=pg_engine,schema=pg_schema)
     print(merchants_active_count)
     print(merchants_active['merchant_key'].size)
-    if (merchants_active['merchant_key'].size != merchants_active_count.loc[0,'merchant_count']):
-        merchants_active_count.loc[0,'merchant_count'] = merchants_active['merchant_key'].size
-        pg_tables_to_use ='current_merchant_active_count'
-        merchants_active_count.to_sql(pg_tables_to_use,pg_engine,schema=pg_schema, if_exists='replace',index=False)
-        print("changed the count")
-        return['run_full_load']
+    from datetime import datetime, timedelta
+
+    d = datetime.today() + timedelta(hours=0, minutes=00)
+    now = datetime.now()
+
+
+    trigger = now.replace(hour=17, minute=30, second=0, microsecond=0)
+    d.strftime('%H:%M %p')
+
+    if (d > trigger):
+       return['run_full_load']
     else :
-        return['run_delta_load']
+
+        if (merchants_active['merchant_key'].size != merchants_active_count.loc[0,'merchant_count']):
+            merchants_active_count.loc[0,'merchant_count'] = merchants_active['merchant_key'].size
+            pg_tables_to_use ='current_merchant_active_count'
+            merchants_active_count.to_sql(pg_tables_to_use,pg_engine,schema=pg_schema, if_exists='replace',index=False)
+            print("changed the count")
+            return['run_full_load']
+        else :
+            return['run_delta_load']
 
 default_args = {
     'owner': 'airflow',
@@ -107,7 +120,7 @@ default_args = {
 with DAG(
     dag_id="PIM_Pipeline",
     start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 06-18/1 * * *",
+    schedule_interval="0 04-16/1 * * *",
     concurrency=100
     ,catchup=False
 ) as dag:

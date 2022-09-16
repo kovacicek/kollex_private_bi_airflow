@@ -64,8 +64,9 @@ with DAG(
     start_date=datetime.today() - timedelta(days=1),
     schedule_interval="0 */1 * * *",
     catchup=False,
-
-    concurrency=100
+    
+    concurrency=100,
+    max_active_runs=1
 ) as dag:
 
 

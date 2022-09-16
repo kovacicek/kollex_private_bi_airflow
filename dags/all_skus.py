@@ -111,7 +111,7 @@ default_args = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
-
+   
     # 'queue': 'bash_queue',
     # 'pool': 'backfill',
     # 'priority_weight': 10,
@@ -134,6 +134,7 @@ with DAG(
     schedule_interval="0 04-16/1 * * *",
     concurrency=100
     ,catchup=False
+   , max_active_runs=1
 ) as dag:
 
     # t1, t2 and t3 are examples of tasks created by instantiating operators

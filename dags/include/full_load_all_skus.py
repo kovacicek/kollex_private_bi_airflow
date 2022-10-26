@@ -415,9 +415,12 @@ def run_full_load():
         #################################    
         ##### Counting Enabled SKUs
         number_of_merchants = merchants_active['merchant_key'].size
-        enabelment_columns  = [col for col in chunk.columns if '_enabled' in col]
+        enabelment_columns = [col for col in chunk.columns if '_enabled' in col]
         enabled_df = chunk[enabelment_columns]
-        enabled_df['enablement']=enabled_df[enabled_df == 'True'].count(axis=1)-2
+        for col in enabelment_columns:
+            enabled_df['enablement'] = enabled_df[enabled_df[col].str.contains('rue', na=False)].count(axis=1) - 2
+        # enabled_df['enablement']=enabled_df[enabled_df == 'True'].count(axis=1)-2
+
         chunk['enablement'] = enabled_df['enablement']
         #print("finished creating merchant Columns")
 

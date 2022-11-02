@@ -179,7 +179,7 @@ def run_full_load():
                                                then pcpm.code
                                            else pcpm2.code
                                            end as char) as base_code
-                                    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
+                                    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%%' then true else false end  is_manual
 
                                        ,pcp.created
                                         
@@ -417,9 +417,7 @@ def run_full_load():
         number_of_merchants = merchants_active['merchant_key'].size
         enabelment_columns  = [col for col in chunk.columns if '_enabled' in col]
         enabled_df = chunk[enabelment_columns]
-        for col in enabelment_columns:
-            enabled_df['enablement'] = enabled_df[enabled_df[col].str.contains('rue', na=False)].count(axis=1) - 2
-        # enabled_df['enablement'] = enabled_df[enabled_df == 'True'].count(axis=1)-2
+        enabled_df['enablement']=enabled_df[(enabled_df == 'True') | (enabled_df == 'true') | (enabled_df == 'TRUE')].count(axis=1)-2
         chunk['enablement'] = enabled_df['enablement']
         #print("finished creating merchant Columns")
 

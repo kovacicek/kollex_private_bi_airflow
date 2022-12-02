@@ -211,8 +211,8 @@ select distinct                               pcp.identifier
                                                             where sku is not null
                                                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                                                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
-                                                where pcp.updated >= current_date - 4 or pcpm.updated >= current_date - 4 
-                                                        or  pcp.created >= current_date - 4 or pcpm.created >= current_date - 4
+                                                where  pcp.updated >= CURDATE( ) - INTERVAL 4 DAY or pcpm.updated >= CURDATE( ) - INTERVAL 4 DAY
+                                                    or pcp.created >= CURDATE( ) - INTERVAL 4 DAY or pcpm.created >= CURDATE( ) - INTERVAL 4 DAY
                                         
     """, con=mysql_engine)
     print(df_product)

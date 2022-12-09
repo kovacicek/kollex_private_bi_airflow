@@ -115,7 +115,10 @@ def run_gedat():
 
         select *
         from final
-        where "Straße u. Hausnummer" <> ''
+        where "Straße u. Hausnummer" not like '' 
+            and "Name-1 (Bezeichnung)" not like '%Aaa%' 
+            and "Name-1 (Bezeichnung)" not like '%itte löschen%' 
+            and "Name-1 (Bezeichnung)" not like '%AAA%'
                                     """
     from sqlalchemy import text
     df= pd.read_sql(query,con=pg_engine)

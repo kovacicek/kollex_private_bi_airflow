@@ -1,30 +1,30 @@
+import os
+import glob
+import csv
+import logging
+import paramiko
+from sqlalchemy import create_engine
+from datetime import datetime, timedelta
+import pandas as pd
+from airflow.models import Variable
+
 
 def run_gedat():
-    import argparse
-    import csv
-    import fnmatch
-    import logging
-    import os
-    import pandas as pd
-    import paramiko
-    import shutil
-    import datetime
-    from sqlalchemy import create_engine
-    from datetime import datetime, timedelta
-    from dotenv import load_dotenv
-    import pandas as pd
-    from airflow.models import Variable
-
-
-    pg_host =   Variable.get("PG_HOST")
+    pg_host = Variable.get("PG_HOST")
     pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password =  Variable.get("PG_PASSWORD_WRITE")
-    pg_database =  Variable.get("PG_DATABASE")
-    pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False, pool_pre_ping=True, pool_recycle=800)
+    pg_password = Variable.get("PG_PASSWORD_WRITE")
+    pg_database = Variable.get("PG_DATABASE")
+    pg_connect_string = \
+        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
+    pg_engine = create_engine(
+        f"{pg_connect_string}",
+        echo=False,
+        pool_pre_ping=True,
+        pool_recycle=800
+    )
 
-    ############ Create list of customers based on agreed format
-    ############ with gedat
+    # Create list of customers based on agreed format
+    # with gedat
     connection = pg_engine.connect()
     
     query = f"""
@@ -121,32 +121,29 @@ def run_gedat():
             and "Name-1 (Bezeichnung)" not like '%AAA%'
                                     """
     from sqlalchemy import text
-    df= pd.read_sql(query,con=pg_engine)
+    df = pd.read_sql(query, con=pg_engine)
     logging.info(f'Data loaded, closing connection and tunnel')
 
-
-
-    dt_string = (datetime.now() - timedelta(days=0)).strftime("%Y-%m-%d-%H-%M-00")
-
-
+    dt_string = \
+        (datetime.now() - timedelta(days=0)).strftime("%Y-%m-%d-%H-%M-00")
 
     filename = f"Kunden_{dt_string}.txt"
     df.to_csv(filename, sep="@", index=False
-        #     , encoding="windows-1252"
-    #           , encoding="iso8859-15"
-    #                     , encoding="iso8859-15"
-            
-                        , encoding="latin9",errors='replace'
-            , header=False,quoting=csv.QUOTE_ALL,
-            escapechar='"',
-            line_terminator='\r\n')
+              # ,encoding="windows-1252"
+              # #,encoding="iso8859-15"
+              # #,encoding="iso8859-15"
+              , encoding="latin9"
+              , errors='replace'
+              , header=False,quoting=csv.QUOTE_ALL
+              , escapechar='"'
+              , line_terminator='\r\n')
 
-    ########## Upload List of customers to SFTP
+    # Upload List of customers to SFTP
 
     path = '/kollex-transfer/gfgh/gedat/kollex'
-    SFTP_HOST = Variable.get("SFTP_HOST")
-    SFTP_USER = Variable.get("SFTP_USER")
-    SFTP_PASS = Variable.get("SFTP_PASS")
+    sftp_host = Variable.get("SFTP_HOST")
+    sftp_user = Variable.get("SFTP_USER")
+    sftp_pass = Variable.get("SFTP_PASS")
 
 
     # ########## Upload the table to the SFTP
@@ -167,36 +164,29 @@ def run_gedat():
 
     # sftp.close()
 
-
-    ########## Download all files from SFTP
+    # Download all files from SFTP
 
     path = '/kollex-transfer/gfgh/gedat/GEDAT/'
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(SFTP_HOST, username=SFTP_USER, password=SFTP_PASS)
-
-
+    client.connect(sftp_host, username=sftp_user, password=sftp_pass)
 
     sftp = client.open_sftp()
 
+    files = list(sftp.listdir(path))
+    files_to_move = list(filter(lambda x: x if '.txt' in x else None, files))
 
-
-    files= list(sftp.listdir(path))
-    files_to_move = list(filter(lambda x :x if '.txt' in x else None,files))
-
-
-    ############### Move everything to History
+    # Move everything to History
     for file in files_to_move:
-
         sftp.rename(f"{path}/{file}", f"{path}/history/{file}")
         # logging.info(f'Moved {file} to /history folder on remote')
-    ############### Download everthing from History
-    import os 
+
+    # Download everything from History
     if not os.path.exists("gedat"):
         os.makedirs("gedat")
     os.chdir("gedat")
     path = '/kollex-transfer/gfgh/gedat/GEDAT/history' 
-    files= list(sftp.listdir(path))
+    files = list(sftp.listdir(path))
     for file in files:
         # print(f"{path}/{file}")
         sftp.get(f"{path}/{file}", f"{file}")
@@ -204,15 +194,11 @@ def run_gedat():
         
         # sftp.rename(f"{path}/{file}", f"{path}/history/history/{file}")
         # logging.info(f'Moved {file} to /history folder on remote')
-    import glob 
 
-    Downloaded_files =glob.glob('Kunden_result*.txt')
-
+    downloaded_files = glob.glob('Kunden_result*.txt')
     df_to_upload = pd.DataFrame()
 
-
-
-    ########### Appending these TXT files into one Dataframe
+    # Appending these TXT files into one Dataframe
     col_names = [
             'KOLLEX_ID',
             'KOLLEX_ADR_ID',
@@ -227,27 +213,33 @@ def run_gedat():
             'GEDAT_EMAIL',
             'EXPDATE'
         ]
-    for file in Downloaded_files:
-     df_to_upload= df_to_upload.append(pd.read_csv(file, sep = "	",names=col_names))
+    for file in downloaded_files:
+        df_to_upload = df_to_upload.append(
+            pd.read_csv(
+                file, sep="	",
+                names=col_names
+            )
+        )
 
+    # Lowering the case of the columns and removing headers from DF
+    df_to_upload = df_to_upload.rename(columns=str.lower)
+    df_to_upload = df_to_upload[df_to_upload['kollex_id'] != 'KOLLEX_ID']
 
-    #### Lowering the case of the columns and removing headers from DF
-    df_to_upload=df_to_upload.rename(columns=str.lower)
-    df_to_upload = df_to_upload[df_to_upload['kollex_id']!='KOLLEX_ID']
-
-    ########## Upload results to DWH
-    df_to_upload.to_sql( con = pg_engine
-                        ,name='gedat_results'
-                        ,schema='sheet_loader'
-                        ,if_exists='replace'
-                        ,index=False)
+    # Upload results to DWH
+    df_to_upload.to_sql(
+        con=pg_engine,
+        name='gedat_results',
+        schema='sheet_loader',
+        if_exists='replace',
+        index=False
+    )
     pg_engine.dispose()
 
-    ### remove all trash files
+    # remove all trash files
 
-    files_to_remove =glob.glob('Kunden_*.txt')
-    import os
-    ########## Remove all Kunden files that were downloaded
+    files_to_remove = glob.glob('Kunden_*.txt')
+
+    # Remove all Kunden files that were downloaded
     [os.remove(file) for file in files_to_remove]
     os.chdir('..')
     os.rmdir("gedat")

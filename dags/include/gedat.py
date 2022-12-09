@@ -25,7 +25,6 @@ def run_gedat():
 
     # Create list of customers based on agreed format
     # with gedat
-    connection = pg_engine.connect()
     
     query = f"""
             with merchants as (
@@ -120,7 +119,7 @@ def run_gedat():
             and "Name-1 (Bezeichnung)" not like '%itte löschen%' 
             and "Name-1 (Bezeichnung)" not like '%AAA%'
                                     """
-    from sqlalchemy import text
+
     df = pd.read_sql(query, con=pg_engine)
     logging.info(f'Data loaded, closing connection and tunnel')
 

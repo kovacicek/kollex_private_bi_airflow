@@ -179,7 +179,7 @@ def run_full_load():
                                                then pcpm.code
                                            else pcpm2.code
                                            end as char) as base_code
-                                    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%%' then true else false end  is_manual
+                                    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
 
                                        ,pcp.created
                                         
@@ -406,7 +406,7 @@ def run_full_load():
         sorted_merchants = sorted_merchants[sorted_merchants['merchant_key']!='merchant_key']
         #print(sorted_merchants)
         for merchant in sorted_merchants['merchant_key']:
-            chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False).astype(str)
+            chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_enabled' in json.dumps(x) else False).astype(str)
             chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None).astype(str)
             chunk[str(merchant)+'_freigabe'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None).astype(str)
             #print(merchant)
@@ -415,9 +415,9 @@ def run_full_load():
         #################################    
         ##### Counting Enabled SKUs
         number_of_merchants = merchants_active['merchant_key'].size
-        enablement_columns = [col for col in chunk.columns if '_enabled' in col]
-        enabled_df = chunk[enablement_columns]
-        enabled_df['enablement']=enabled_df[(enabled_df == 'True') | (enabled_df == 'true') | (enabled_df == 'TRUE')].count(axis=1)-2
+        enabelment_columns  = [col for col in chunk.columns if '_enabled' in col]
+        enabled_df = chunk[enabelment_columns]
+        enabled_df['enablement']=enabled_df[enabled_df == 'True'].count(axis=1)-2
         chunk['enablement'] = enabled_df['enablement']
         #print("finished creating merchant Columns")
 

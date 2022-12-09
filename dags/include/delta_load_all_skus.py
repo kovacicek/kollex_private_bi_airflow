@@ -211,8 +211,8 @@ select distinct                               pcp.identifier
                                                             where sku is not null
                                                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                                                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
-                                                where pcp.updated >= current_date - 4 or pcpm.updated >= current_date - 4 
-                                                        or  pcp.created >= current_date - 4 or pcpm.created >= current_date - 4
+                                                where  pcp.updated >= CURDATE( ) - INTERVAL 4 DAY or pcpm.updated >= CURDATE( ) - INTERVAL 4 DAY
+                                                    or pcp.created >= CURDATE( ) - INTERVAL 4 DAY or pcpm.created >= CURDATE( ) - INTERVAL 4 DAY
                                         
     """, con=mysql_engine)
     print(df_product)
@@ -433,7 +433,7 @@ select distinct                               pcp.identifier
     sorted_merchants = merchants_active.sort_values('merchant_key')
     sorted_merchants = sorted_merchants[sorted_merchants['merchant_key']!='merchant_key']
     for merchant in sorted_merchants['merchant_key']:
-        chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else False)
+        chunk[str(merchant)+'_enabled'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_enabled']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_enabled' in json.dumps(x) else False)
         chunk[str(merchant)+'_id'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['gfgh_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'gfgh_'+str(merchant)+'_id' in json.dumps(x) else None)
         chunk[str(merchant)+'_freigabe'] = chunk['raw_values_product'].apply(lambda x :json.loads(x)['freigabe_'+str(merchant)+'_id']['<all_channels>']['<all_locales>'] if 'freigabe_'+str(merchant)+'_id' in json.dumps(x) else None)
     ##print(merchant)

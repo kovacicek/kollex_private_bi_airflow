@@ -28,95 +28,9 @@ def run_gedat():
     connection = pg_engine.connect()
     
     query = f"""
-            with merchants as (
-                            select '01'                                                as "Satzart"
-                                , '00000001'                                          as "Empfänger"
-                                , '43999023'                                          as "Absender"
-                                , '01'                                                as "Versionsnummer"
-                                , concat( 'M_', id_merchant )                         as "Hersteller-Kunden-Nr."
-                                , NULL                                                as "GEDAT-Adressnummer"
-                                , NULL                                                as "GLN"
-                                , NULL                                                as "Leerfeld1"
-                                , NULL                                                as "Leerfeld2"
-                                , NULL                                                as "Gemeindekennziffer"
-                                , 'Getränkefachgroßhandel'                            as "Geschäftstyp"
-                                , merchant.name                                       as "Name-1 (Bezeichnung)"
-                                , NULL                                                as "Name-2 (Inhaber)"
-                                , merchant.name                                       as "Kurzbezeichnung"
-                                , concat( address.street, ' ', address.house_number ) as "Straße u. Hausnummer"
-                                , zip                                                 as "Postleitzahl"
-                                , city                                                as "Ort"
-                                , 'Deutschland'                                       as "Land"
-                                , contact.mobile_phone                                as "Telefon-1"
-                                , NULL                                                as "Telefon-2"
-                                , NULL                                                as "Leerfeld2"
-                                , NULL                                                as "Telefax"
-                                , NULL                                                as "Leerfeld3"
-                                , to_char( now( )::date, 'YYYYMMDD' )                 as "Übertragungsdatum"
-                                , 'N'                                                 as "Status"
-                                , '10000004'                                          as "Übertragungsnummer"
-                            from fdw_customer_service.merchant
-                                    left join fdw_customer_service.merchant_has_contacts
-                                                on merchant.id_merchant = merchant_has_contacts.fk_merchant
-                                    left join fdw_customer_service.contact on merchant_has_contacts.fk_contact
-                                = contact.id_contact
-                                    left join fdw_customer_service.address on address.id_address = merchant.fk_address
-                            where merchant.name not like '%%test%%' and merchant.name not like '%%Test%%'
-                        )
-
-
-        , customers as (
-                            select '01'                                                as "Satzart"
-                                , '00000001'                                          as "Empfänger"
-                                , '43999023'                                          as "Absender"
-                                , '01'                                                as "Versionsnummer"
-                                , concat( 'O_', id_customer )                         as "Hersteller-Kunden-Nr."
-                                , NULL                                                as "GEDAT-Adressnummer"
-                                , NULL                                                as "GLN"
-                                , NULL                                                as "Leerfeld"
-                                , NULL                                                as "Leerfeld1"
-                                , NULL                                                as "Gemeindekennziffer"
-                                , NULL                                                as "Geschäftstyp"
-                                , customer.name                                       as "Name-1 (Bezeichnung)"
-                                , customer.name2                                      as "Name-2 (Inhaber)"
-                                , customer.short_name                                 as "Kurzbezeichnung"
-                                , concat( address.street, ' ', address.house_number ) as "Straße u. Hausnummer"
-                                , address.zip                                         as "Postleitzahl"
-                                , address.city                                        as "Ort"
-                                , address.country                                     as "Land"
-                                , contact.mobile_phone                                as "Telefon-1"
-                                , NULL                                                as "Telefon-2"
-                                , NULL                                                as "Leerfeld2"
-                                , NULL                                                as "Telefax"
-                                , NULL                                                as "Leerfeld3"
-                                , to_char( now( )::date, 'YYYYMMDD' )                 as "Übertragungsdatum"
-                                , 'N'                                                 as "Status"
-                                , '10000004'                                          as "Übertragungsnummer"
-                            from fdw_customer_service.customer
-                                    left join fdw_customer_service.address
-                                                on customer.fk_address = address.id_address
-                                    left join fdw_customer_service.customer_has_contacts
-                                                on customer.id_customer = customer_has_contacts.fk_customer
-                                    left join fdw_customer_service.contact
-                                                on customer_has_contacts.fk_contact = contact.id_contact
-                            where customer.name not like '%%test%%' and customer.name not like '%%Test%%'
-
-                        )
-
-
-        , final as (
-                        select *
-                        from customers
-
-                        union
-                        select *
-                        from merchants
-                    )
-
-        select *
-        from final
-        where "Straße u. Hausnummer" <> ''
-                                    """
+                    select * 
+                    from prod_info_layer.gedat_upload
+        """
     from sqlalchemy import text
     df= pd.read_sql(query,con=pg_engine)
     logging.info(f'Data loaded, closing connection and tunnel')
@@ -146,23 +60,23 @@ def run_gedat():
     SFTP_PASS = Variable.get("SFTP_PASS")
 
 
-    # ########## Upload the table to the SFTP
-    # client = paramiko.SSHClient()
-    # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # client.connect(SFTP_HOST, username=SFTP_USER, password=SFTP_PASS)
+    ########## Upload the table to the SFTP
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(SFTP_HOST, username=SFTP_USER, password=SFTP_PASS)
 
-    # sftp = client.open_sftp()
-    # sftp.put(f"{filename}", f"{path}/{filename}")
-    # logging.info(f'Uploaded: {filename} to {path}')
-    # ########## Remove all Kunden files that were created to be uploaded to gedat
+    sftp = client.open_sftp()
+    sftp.put(f"{filename}", f"{path}/{filename}")
+    logging.info(f'Uploaded: {filename} to {path}')
+    ########## Remove all Kunden files that were created to be uploaded to gedat
 
-    # import glob
-    # files_to_remove =glob.glob('Kunden_*.txt')
-    # import os
+    import glob
+    files_to_remove =glob.glob('Kunden_*.txt')
+    import os
 
-    # [os.remove(file) for file in files_to_remove]
+    [os.remove(file) for file in files_to_remove]
 
-    # sftp.close()
+    sftp.close()
 
 
     ########## Download all files from SFTP

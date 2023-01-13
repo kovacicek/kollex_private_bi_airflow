@@ -31,7 +31,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="Name_Matching",
+    dag_id="hubspot",
     start_date=datetime.today() - timedelta(days=1),
     schedule_interval="0 7 * * *'",
     catchup=False,
@@ -39,7 +39,7 @@ with DAG(
     concurrency=100
 ) as dag:
 
-    Name_Matching_Task = PythonOperator(
+    Hubspot_task = PythonOperator(
         task_id='hubspot_task'
         , python_callable=hubspot_sync,
         trigger_rule='all_success'

@@ -5,7 +5,6 @@ from airflow.operators.python import PythonOperator
 
 from include.hubspot_crm_customer_sync import hubspot_sync
 
-
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -33,7 +32,7 @@ default_args = {
 with DAG(
     dag_id="hubspot",
     start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 7 * * *'",
+    schedule_interval="0 7 * * *",
     catchup=False,
 
     concurrency=100

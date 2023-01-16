@@ -15,7 +15,7 @@ def hubspot_sync():
     pg_engine = create_engine(f"{pg_connect_string}", echo=False,
                               pool_pre_ping=True, pool_recycle=800)
 
-    sheet_name = "Hubspot_contacts"
+    sheet_name = "contacts"
     df = pd.read_sql(
         """SELECT * FROM prod_info_layer.customer_hubspot_upload""",
         con=pg_engine

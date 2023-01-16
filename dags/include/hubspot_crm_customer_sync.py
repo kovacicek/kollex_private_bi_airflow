@@ -1,22 +1,12 @@
-import gspread
-import gspread_pandas
-import gspread_pandas.conf
-import gspread_dataframe as gd
-import logging
-import os
+import gspread as gs
 import pandas as pd
 
-from airflow.models import Variable
-from gspread import SpreadsheetNotFound
-from gspread_pandas import Spread
-from oauth2client.service_account import ServiceAccountCredentials
+import gspread_dataframe as gd
 from sqlalchemy import create_engine
-
-logging.getLogger().setLevel(logging.INFO)
+from airflow.models import Variable
 
 
 def hubspot_sync():
-    # database connection
     pg_host = Variable.get("PG_HOST")
     pg_user = Variable.get("PG_USERNAME_WRITE")
     pg_password = Variable.get("PG_PASSWORD_WRITE")
@@ -25,70 +15,48 @@ def hubspot_sync():
     pg_engine = create_engine(f"{pg_connect_string}", echo=False,
                               pool_pre_ping=True, pool_recycle=800)
 
-    spreadsheet_name = "Hubspot_contacts"
-    sheet_name = "contacts"
+    sheet_name = "Hubspot_contacts"
     df = pd.read_sql(
         """SELECT * FROM prod_info_layer.customer_hubspot_upload""",
         con=pg_engine
     )
 
-    ### already used secret credentials file
-    gapi_keyfile = "gsheet-loading-into-dwh-d51d3a31aff8.json"
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    google_creds = gspread.authorize(
-        ServiceAccountCredentials.from_json_keyfile_name(gapi_keyfile, scope)
-    )
-    ### configuration for local execution???
-    config = gspread_pandas.conf.get_config(
-        conf_dir=os.path.abspath(os.getcwd())
-    )
-    try:
-        # if exist spreadsheet only append
-        sheet = google_creds.open(spreadsheet_name).worksheet(sheet_name)
-        sheet_as_df = gd.get_as_dataframe(sheet)
+    gsheet_credentials = {
+        "type": Variable.get("gsheet_creds_type"),
+        "project_id": Variable.get("gsheet_creds_project_id"),
+        "private_key_id": Variable.get("gsheet_creds_private_key_id"),
+        "private_key": Variable.get("gsheet_creds_private_key"),
+        "client_email": Variable.get("gsheet_creds_client_email"),
+        "client_id": Variable.get("gsheet_creds_client_id"),
+        "auth_uri": Variable.get("gsheet_creds_auth_uri"),
+        "token_uri": Variable.get("gsheet_creds_token_uri"),
+        "auth_provider_x509_cert_url": Variable.get("gsheet_creds_auth_provider_x509_cert_url"),
+        "client_x509_cert_url": Variable.get("gsheet_creds_client_x509_cert_url")
+    }
+    gc = gs.service_account_from_dict(gsheet_credentials)
+    print('loaded credentials')
 
-        df.columns = [c.replace(' ', '_') for c in df.columns]
-        sheet_as_df.columns = [c.replace(' ', '_') for c in sheet_as_df.columns]
+    sh = gc.open_by_url('https://docs.google.com/spreadsheets/d/1Nz1K6M1x_LsYGi3SkcQL8JApSSLjB6goLqU5-FNOtrs/edit#gid=1699304246')
 
-        current_ids = sheet_as_df['Parent_ID'].tolist()
-        new_ids = df['Parent_ID'].tolist()
-        missing_ids = list(set(new_ids) - set(current_ids))
-        filter_df = df[df['Parent_ID'].isin(missing_ids)]
+    ws = sh.worksheet(sheet_name)
+    # Get the existing data as a dataframe
+    sheet_as_df = gd.get_as_dataframe(ws)
+    # Append the new dataframe to the existing dataframe
+    df.columns = [c.replace(' ', '_') for c in df.columns]
+    sheet_as_df.columns = [c.replace(' ', '_') for c in sheet_as_df.columns]
 
-        df.columns = [c.replace('_', ' ') for c in df.columns]
-        sheet_as_df.columns = [c.replace('_', ' ') for c in sheet_as_df.columns]
-        filter_df.columns = [c.replace('_', ' ') for c in filter_df.columns]
+    current_ids = sheet_as_df['Parent_ID'].tolist()
+    new_ids = df['Parent_ID'].tolist()
+    missing_ids = list(set(new_ids) - set(current_ids))
+    filter_df = df[df['Parent_ID'].isin(missing_ids)]
 
-        sheet_as_df.append(filter_df)
+    df.columns = [c.replace('_', ' ') for c in df.columns]
+    sheet_as_df.columns = [c.replace('_', ' ') for c in sheet_as_df.columns]
+    filter_df.columns = [c.replace('_', ' ') for c in filter_df.columns]
 
-        spreadsheet = google_creds.open(spreadsheet_name)
-        spread = Spread(spreadsheet_name)
-        spread.df_to_sheet(sheet_as_df,
-                           index=False,
-                           sheet=sheet_name,
-                           start='A1',
-                           replace=False)
-        logging.info(f'Found Existing Spreadsheet {spreadsheet.url}')
-    except SpreadsheetNotFound:
-        # if not exist spreadsheet create new
-        logging.info('Creating New Spreadsheet')
-        spreadsheet = google_creds.create(spreadsheet_name)
-        spread = Spread(spreadsheet_name)
-        spread.df_to_sheet(df,
-                           index=False,
-                           sheet=sheet_name,
-                           start='A1',
-                           replace=True)
-        # spreadsheet.share('kollex.de',
-        #                   perm_type='domain',
-        #                   role='writer')
-        # spreadsheet.share('pim@kollex.de',
-        #                   perm_type='user',
-        #                   role='writer')
-        spreadsheet.share('milan.kovacic.extern@kollex.de',
-                          perm_type='user',
-                          role='writer')
-        logging.info(spreadsheet.url)
+    appended_df = sheet_as_df.append(filter_df)
+    # Clear the existing sheet
+    ws.clear()
+    # Write the appended dataframe to the sheet
+    gd.set_with_dataframe(ws, appended_df)
+    print("Dataframe has been appended to the sheet")

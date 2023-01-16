@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from include.hubspot_crm_customer_sync import hubspot_sync
+
+from dags.include.hubspot_crm_customer_sync import hubspot_sync
 
 default_args = {
     'owner': 'airflow',

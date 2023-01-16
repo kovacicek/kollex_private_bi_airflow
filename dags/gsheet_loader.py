@@ -94,6 +94,16 @@ with DAG(
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
                                                  )
+
+    COPY_BITBURGER_QR_LOAD = PythonOperator(
+                                                            task_id='COPY_BITBURGER_QR_LOAD'
+                                                        , python_callable=run_gsheet_load,
+                                                          op_kwargs={'pg_schema': 'sheet_loader'
+                                                                    , 'pg_tables_to_use': 'bitburger_qr'
+                                                                    ,'url' :'https://docs.google.com/spreadsheets/d/19y_8oXExLhEvCOzwQZo0EMzOIzD0vQ15-5k80yQT26c/edit#gid=1518295858'
+                                                                    , 'sheet_name':'kollex (Bitburger)'
+                                                                   }, retries=5
+                                                                   )
     COPY_QR_KOLLEX_SHOP_SHEET_LOADER = PythonOperator (
                                                                 task_id='COPY_QR_KOLLEX_SHOP_SHEET_LOADER'
                                                                 , python_callable=run_gsheet_load,
@@ -176,5 +186,5 @@ with DAG(
     data_dog_log_final = DummyOperator(task_id='data_dog_log_final', retries=3,trigger_rule='none_failed')
 data_dog_log >> [COPY_MERCHANT_CSV,COPY_EXCLUDE_LIST  ,COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER,  #>> dbt_job_raw_layers#>>run_All_SKUs 
 COPY_QR_KOLLEX_EXPRESS_SHEET_LOADER ,COPY_QR_KOLLEX_SHOP_SHEET_LOADER ,COPY_HOLDING ,COPY_MERCHANT_ACTIVE,
-COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader,COPY_MERCHANT_CS] >>data_dog_log_final
+COPY_MERCHANT_ACTIVE ,COPY_MERCHANT_ON_HOLD ,COPY_MERCHANT_NEW,COPY_EXCLUDE_LIST_sheet_loader,COPY_MERCHANT_CS,COPY_BITBURGER_QR_LOAD] >>data_dog_log_final
     

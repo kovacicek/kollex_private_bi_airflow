@@ -18,7 +18,7 @@ def pictures_sku_load():
     bucket_name = Variable.get("BUCKET_NAME")
     bucket_object = Variable.get("BUCKET_OBJECT")
     pictures = []
-    logging.info('Downloading files from s3')
+    logging.info('Connecting with AWS S3')
     s3 = boto3.resource(
         's3',
         aws_access_key_id=Variable.get("AWS_ACCESS_KEY"),
@@ -27,7 +27,7 @@ def pictures_sku_load():
     )
     bucket = s3.Bucket(bucket_name)
     for obj in bucket.objects.filter(Prefix=bucket_object):
-        logging.info(f"Downloading file: {obj.key}")
+        logging.info(f"Added file: {obj.key}")
         pictures.append(obj.key)
 
     picture_names = [os.path.basename(name) for name in pictures if

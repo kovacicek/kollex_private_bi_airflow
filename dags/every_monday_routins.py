@@ -64,4 +64,4 @@ with DAG(
         bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
         dag=dag,
     )
-data_dog_log >> run_monday_api >> get_gedat_results >> data_dog_log_finished
+data_dog_log >> run_monday_api >> get_gedat_results >> run_pictures_sku_load >> data_dog_log_finished

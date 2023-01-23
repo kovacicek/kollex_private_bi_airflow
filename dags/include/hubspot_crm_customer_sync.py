@@ -24,14 +24,14 @@ def hubspot_sync():
     gsheet_credentials = {
         "type": Variable.get("gsheet_creds_type"),
         "project_id": Variable.get("gsheet_creds_project_id"),
-        "private_key_id": Variable.get("gsheet_creds_private_key_id"),
-        "private_key": Variable.get("gsheet_creds_private_key"),
-        "client_email": Variable.get("gsheet_creds_client_email"),
-        "client_id": Variable.get("gsheet_creds_client_id"),
+        "private_key_id": Variable.get("hubspot_private_key_id"),
+        "private_key": Variable.get("hubspot_private_key"),
+        "client_email": Variable.get("hubspot_client_email"),
+        "client_id": Variable.get("hubspot_client_id"),
         "auth_uri": Variable.get("gsheet_creds_auth_uri"),
-        "token_uri": Variable.get("gsheet_creds_token_uri"),
+        "token_uri": Variable.get("hubspot_token_uri"),
         "auth_provider_x509_cert_url": Variable.get("gsheet_creds_auth_provider_x509_cert_url"),
-        "client_x509_cert_url": Variable.get("gsheet_creds_client_x509_cert_url")
+        "client_x509_cert_url": Variable.get("hubspot_x509_cert_url")
     }
     gc = gs.service_account_from_dict(gsheet_credentials)
     print('loaded credentials')

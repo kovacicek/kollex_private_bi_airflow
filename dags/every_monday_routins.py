@@ -39,11 +39,11 @@ with DAG(
         catchup=False
 ) as dag:
     # t1, t2 and t3 are examples of tasks created by instantiating operators
-    data_dog_log = BashOperator(task_id='Started_Monday_Routines_DAG',
-                                bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-                                dag=dag,
-                                )
-
+    data_dog_log = BashOperator(
+        task_id='Started_Monday_Routines_DAG',
+        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
+        dag=dag,
+    )
     run_monday_api = PythonOperator(
         task_id='run_monday_api',
         python_callable=run_monday_api,
@@ -59,8 +59,9 @@ with DAG(
         python_callable=pictures_sku_load,
         retries=5
     )
-    data_dog_log_finished = BashOperator(task_id='Finished_Monday_Routines_DAG',
-                                         bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-                                         dag=dag,
-                                         )
+    data_dog_log_finished = BashOperator(
+        task_id='Finished_Monday_Routines_DAG',
+        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
+        dag=dag,
+    )
 data_dog_log >> run_monday_api >> get_gedat_results >> data_dog_log_finished

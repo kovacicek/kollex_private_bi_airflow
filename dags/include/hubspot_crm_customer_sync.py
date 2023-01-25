@@ -15,9 +15,54 @@ def hubspot_sync():
     pg_engine = create_engine(f"{pg_connect_string}", echo=False,
                               pool_pre_ping=True, pool_recycle=800)
 
-    sheet_name = "contacts"
+    sheet_name = Variable.get("HUBSPOT_SHEET_NAME")
     df = pd.read_sql(
-        """SELECT * FROM prod_info_layer.customer_hubspot_upload""",
+        """
+    with main as (
+        select 
+            "id_customer",
+            "UUID"
+        from 
+            prod_info_layer.customer_table_horeca_children_customers_classified cth 
+        group by "id_customer", "UUID"
+)
+    SELECT 
+        main."UUID" as "Customer UUID",
+        "typ",
+        "Unternehmensname",
+        "E-Mail Adresse Owner",
+        "Customer Status",
+        "Number Of Orders",
+        "Wann registriert",
+        "Wann zuletzt bestellt",
+        "Status Last Order",
+        "Wann letzter Upload"
+        "Status Last Supplier Request",
+        "Straße",
+        "PLZ",
+        "Ort",
+        "Gilt als aktiv",
+        "Registrierter Kunde ohne Bestellung",
+        "Merchant Aktivierung offen",
+        "Gilt als inaktiv (hat bereits bestellt, ist seit 28 inaktiv)",
+        "Durchschnittlicher Bestellrythmus (allgemein)",
+        "Wie oft durchschnittlichen in den letzten 3 Monaten bestellt",
+        "email",
+        "Name Owner",
+        "Vorname Owner",
+        "Telefonnummer Owner",
+        "Coke Kunde",
+        "Bitburger Kunde",
+        "Krombacher Kunde",
+        "Rottkapechen Kunde",
+        "Wann JV-Typeform ausgefüllt",
+        "Wann eingeladen"
+    FROM
+        prod_info_layer.customer_hubspot_upload chu
+    left join
+        main 
+    on chu."Parent ID" = main."id_customer"
+        """,
         con=pg_engine
     )
 
@@ -36,7 +81,7 @@ def hubspot_sync():
     gc = gs.service_account_from_dict(gsheet_credentials)
     print('loaded credentials')
 
-    sh = gc.open_by_url('https://docs.google.com/spreadsheets/d/1Nz1K6M1x_LsYGi3SkcQL8JApSSLjB6goLqU5-FNOtrs/edit#gid=1699304246')
+    sh = gc.open_by_url(Variable.get("HUBSPOT_SPREADSHEET"))
 
     ws = sh.worksheet(sheet_name)
     # Get the existing data as a dataframe
@@ -45,10 +90,13 @@ def hubspot_sync():
     df.columns = [c.replace(' ', '_') for c in df.columns]
     sheet_as_df.columns = [c.replace(' ', '_') for c in sheet_as_df.columns]
 
-    current_ids = sheet_as_df['Customer_Uuid'].tolist()
-    new_ids = df['Customer_Uuid'].tolist()
+    df['Customer_UUID'] = df['Customer_UUID'].astype(str)
+    sheet_as_df['Customer_UUID'] = sheet_as_df['Customer_UUID'].astype(str)
+
+    current_ids = sheet_as_df['Customer_UUID'].tolist()
+    new_ids = df['Customer_UUID'].tolist()
     missing_ids = list(set(new_ids) - set(current_ids))
-    filter_df = df[df['Customer_Uuid'].isin(missing_ids)]
+    filter_df = df[df['Customer_UUID'].isin(missing_ids)]
 
     df.columns = [c.replace('_', ' ') for c in df.columns]
     sheet_as_df.columns = [c.replace('_', ' ') for c in sheet_as_df.columns]

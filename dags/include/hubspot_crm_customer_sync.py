@@ -45,10 +45,10 @@ def hubspot_sync():
     df.columns = [c.replace(' ', '_') for c in df.columns]
     sheet_as_df.columns = [c.replace(' ', '_') for c in sheet_as_df.columns]
 
-    current_ids = sheet_as_df['Parent_ID'].tolist()
-    new_ids = df['Parent_ID'].tolist()
+    current_ids = sheet_as_df['Customer_Uuid'].tolist()
+    new_ids = df['Customer_Uuid'].tolist()
     missing_ids = list(set(new_ids) - set(current_ids))
-    filter_df = df[df['Parent_ID'].isin(missing_ids)]
+    filter_df = df[df['Customer_Uuid'].isin(missing_ids)]
 
     df.columns = [c.replace('_', ' ') for c in df.columns]
     sheet_as_df.columns = [c.replace('_', ' ') for c in sheet_as_df.columns]

@@ -31,8 +31,10 @@ def pictures_sku_load():
     for page in page_iterator:
         for obj in page['Contents']:
             filename = obj['Key'].split('/')[-1]
-            if filename.endswith('.png') and filename.split('.png')[
-                0].isdigit():
+            if (
+                    filename.endswith('.png')
+                    and filename.split('.png')[0].isdigit()
+            ):
                 sku = filename.split('.png')[0]
                 sku_to_last_modified[sku] = obj['LastModified']
                 skus.append(sku)

@@ -1,6 +1,5 @@
 import boto3
 import logging
-import os
 import pandas as pd
 from airflow.models import Variable
 from sqlalchemy import create_engine

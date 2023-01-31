@@ -22,8 +22,8 @@ def pictures_sku_load():
     sku_to_last_modified = {}
     s3 = boto3.client(
         's3',
-        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"),
-        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        aws_access_key_id=Variable.get("AWS_ACCESS_KEY"),
+        aws_secret_access_key=Variable.get("AWS_SECRET_ACCESS_KEY"),
         region_name="us-east-1"
     )
     paginator = s3.get_paginator('list_objects_v2')
@@ -32,7 +32,8 @@ def pictures_sku_load():
     for page in page_iterator:
         for obj in page['Contents']:
             filename = obj['Key'].split('/')[-1]
-            if filename.endswith('.png') and filename.split('.png')[0].isdigit():
+            if filename.endswith('.png') and filename.split('.png')[
+                0].isdigit():
                 sku = filename.split('.png')[0]
                 sku_to_last_modified[sku] = obj['LastModified']
                 skus.append(sku)
@@ -40,7 +41,7 @@ def pictures_sku_load():
 
     data = {"sku": skus}
     df = pd.DataFrame(data)
-    df['last_modified'] = df['sku'].map(sku_to_last_modified)
+    df['uploaded_at'] = df['sku'].map(sku_to_last_modified)
     df.drop_duplicates(subset='sku', inplace=True)
     df.to_sql(
         'pictures_with_sku',

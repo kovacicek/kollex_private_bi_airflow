@@ -32,7 +32,7 @@ default_args = {
 with DAG(
     dag_id="hubspot",
     start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 7 * * *",
+    schedule_interval="0 7,14,21 * * *",
     catchup=False,
 
     concurrency=100

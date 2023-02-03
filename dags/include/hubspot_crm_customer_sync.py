@@ -18,17 +18,21 @@ def hubspot_sync():
     sheet_name = Variable.get("HUBSPOT_SHEET_NAME")
     df = pd.read_sql(
         """
-    with main as (
-        select 
-            "id_customer",
-            "UUID"
+            with main as (
+    select    cth."id_customer",
+            cth."UUID",
+            cth1."First Order Date"
         from 
             prod_info_layer.customer_table_horeca_children_customers_classified cth 
-        group by "id_customer", "UUID"
+        join 
+            prod_info_layer.customer_table_horeca_children_customers cth1
+        using(id_customer)
+        group by cth."id_customer", cth."UUID",  cth1."First Order Date"
 )
     SELECT 
         main."UUID" as "Customer UUID",
         "typ",
+        main."First Order Date",
         "Unternehmensname",
         "E-Mail Adresse Owner",
         "Customer Status",

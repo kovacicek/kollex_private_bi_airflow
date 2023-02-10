@@ -76,7 +76,7 @@ def hubspot_sync():
         on chu."Parent ID" = main."id_customer"
         left join merchants
         on chu."Parent ID" = merchants."fk_customer"
-        where "Merchant Aktivierung offen" is false and  "email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')
+        where  ("email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')) and "Customer Status" not like 'Merchant Aktivierung austehend'
         """,
         con=pg_engine,
     )
@@ -102,26 +102,25 @@ def hubspot_sync():
 
     ws = sh.worksheet(sheet_name)
     # Get the existing data as a dataframe
-    sheet_as_df = gd.get_as_dataframe(ws)
-    # Append the new dataframe to the existing dataframe
-    df.columns = [c.replace(" ", "_") for c in df.columns]
-    sheet_as_df.columns = [c.replace(" ", "_") for c in sheet_as_df.columns]
-
-    df["Customer_UUID"] = df["Customer_UUID"].astype(str)
-    sheet_as_df["Customer_UUID"] = sheet_as_df["Customer_UUID"].astype(str)
-
-    current_ids = sheet_as_df["Customer_UUID"].tolist()
-    new_ids = df["Customer_UUID"].tolist()
-    missing_ids = list(set(new_ids) - set(current_ids))
-    filter_df = df[df["Customer_UUID"].isin(missing_ids)]
-
-    df.columns = [c.replace("_", " ") for c in df.columns]
-    sheet_as_df.columns = [c.replace("_", " ") for c in sheet_as_df.columns]
-    filter_df.columns = [c.replace("_", " ") for c in filter_df.columns]
-
-    appended_df = sheet_as_df.append(filter_df)
+    # sheet_as_df = gd.get_as_dataframe(ws)
+    # # Append the new dataframe to the existing dataframe
+    # df.columns = [c.replace(" ", "_") for c in df.columns]
+    # sheet_as_df.columns = [c.replace(" ", "_") for c in sheet_as_df.columns]
+    #
+    # df["Customer_UUID"] = df["Customer_UUID"].astype(str)
+    # sheet_as_df["Customer_UUID"] = sheet_as_df["Customer_UUID"].astype(str)
+    #
+    # current_ids = sheet_as_df["Customer_UUID"].tolist()
+    # new_ids = df["Customer_UUID"].tolist()
+    # missing_ids = list(set(new_ids) - set(current_ids))
+    # filter_df = df[df["Customer_UUID"].isin(missing_ids)]
+    #
+    # df.columns = [c.replace("_", " ") for c in df.columns]
+    # sheet_as_df.columns = [c.replace("_", " ") for c in sheet_as_df.columns]
+    # filter_df.columns = [c.replace("_", " ") for c in filter_df.columns]
+    #
+    # appended_df = sheet_as_df.append(filter_df)
     # Clear the existing sheet
     ws.clear()
-    # Write the appended dataframe to the sheet
-    gd.set_with_dataframe(ws, appended_df)
+    gd.set_with_dataframe(ws, df)
     print("Dataframe has been appended to the sheet")

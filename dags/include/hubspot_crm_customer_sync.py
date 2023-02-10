@@ -54,6 +54,7 @@ def hubspot_sync():
         "Ort",
         "Gilt als aktiv",
         "Registrierter Kunde ohne Bestellung",
+        "Merchant Aktivierung offen",
         "Gilt als inaktiv (hat bereits bestellt, ist seit 28 inaktiv)",
         "Durchschnittlicher Bestellrythmus (allgemein)",
         "Wie oft durchschnittlichen in den letzten 3 Monaten bestellt",
@@ -67,8 +68,7 @@ def hubspot_sync():
         "Rottkapechen Kunde",
         "Wann JV-Typeform ausgefüllt",
         "Wann eingeladen",
-        merchants."merchant_name" as "merchant who invited customer",
-        count(*) over (partition by "typ") as num_of_mails
+        merchants."merchant_name" as "merchant who invited customer"
         FROM
         prod_info_layer.customer_hubspot_upload chu
         left join
@@ -76,7 +76,7 @@ def hubspot_sync():
         on chu."Parent ID" = main."id_customer"
         left join merchants
         on chu."Parent ID" = merchants."fk_customer"
-        where  "email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')
+        where "Merchant Aktivierung offen" is false and  "email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')
         """,
         con=pg_engine,
     )

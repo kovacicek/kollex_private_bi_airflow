@@ -91,7 +91,7 @@ def hubspot_sync():
         """,
         con=pg_engine,
     )
-    df["Number_of_orders"] = df["Number_of_orders"].astype(str)
+    df["Number Of Orders"] = df["Number Of Orders"].astype(str)
     gsheet_credentials = {
         "type": Variable.get("gsheet_creds_type"),
         "project_id": Variable.get("gsheet_creds_project_id"),

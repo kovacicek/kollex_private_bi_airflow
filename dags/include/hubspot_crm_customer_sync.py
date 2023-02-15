@@ -35,7 +35,7 @@ def hubspot_sync():
         , merchants as (
                 select "fk_customer", "name" as "merchant_name" from fdw_customer_service.customer_has_merchant join fdw_customer_service.merchant on "fk_merchant" = "id_merchant"
         )
-        
+       , filter_email as(
         SELECT 
         main."UUID" as "Customer UUID",
         "typ",
@@ -43,7 +43,8 @@ def hubspot_sync():
         "Unternehmensname",
         "E-Mail Adresse Owner",
         "Customer Status",
-        "Number Of Orders",
+        case when chu."Number Of Orders" is null then 0
+             when chu."Number Of Orders" is not null then chu."Number Of Orders" end as "Number Of Orders",
         "Wann registriert",
         "Wann zuletzt bestellt",
         "Status Last Order",
@@ -68,7 +69,7 @@ def hubspot_sync():
         "Rottkapechen Kunde",
         "Wann JV-Typeform ausgefüllt",
         "Wann eingeladen",
-        merchants."merchant_name" as "merchant who invited customer"
+        merchants."merchant_name" as "merchant who invited customer"        
         FROM
         prod_info_layer.customer_hubspot_upload chu
         left join
@@ -76,11 +77,21 @@ def hubspot_sync():
         on chu."Parent ID" = main."id_customer"
         left join merchants
         on chu."Parent ID" = merchants."fk_customer"
-        where  ("email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')) and "Customer Status" not like 'Merchant Aktivierung austehend'
+        where 
+        "E-Mail Adresse Owner" not like '%%kollex.io%%' and "E-Mail Adresse Owner" not like '%%kollex.de%%' and "E-Mail Adresse Owner" not like '%%kollextest.de%%'
+           and 
+           "E-Mail Adresse Owner" not like '%%kollex-demo.io%%' and "E-Mail Adresse Owner" not like '%%kollex-demo.de%%'
+           and 
+           "Customer Status" not like 'Merchant Aktivierung austehend')
+    select * from filter_email 
+    where 
+    "email" is null 
+    or 
+        "email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%'
         """,
         con=pg_engine,
     )
-
+    df["Number_of_orders"] = df["Number_of_orders"].astype(str)
     gsheet_credentials = {
         "type": Variable.get("gsheet_creds_type"),
         "project_id": Variable.get("gsheet_creds_project_id"),

@@ -35,7 +35,7 @@ def hubspot_sync():
         , merchants as (
                 select "fk_customer", "name" as "merchant_name" from fdw_customer_service.customer_has_merchant join fdw_customer_service.merchant on "fk_merchant" = "id_merchant"
         )
-
+       , filter_email as(
         SELECT 
         main."UUID" as "Customer UUID",
         "typ",
@@ -43,7 +43,8 @@ def hubspot_sync():
         "Unternehmensname",
         "E-Mail Adresse Owner",
         "Customer Status",
-        "Number Of Orders",
+        case when chu."Number Of Orders" is null then 0
+             when chu."Number Of Orders" is not null then chu."Number Of Orders" end as "Number Of Orders",
         "Wann registriert",
         "Wann zuletzt bestellt",
         "Status Last Order",
@@ -54,6 +55,7 @@ def hubspot_sync():
         "Ort",
         "Gilt als aktiv",
         "Registrierter Kunde ohne Bestellung",
+        "Merchant Aktivierung offen",
         "Gilt als inaktiv (hat bereits bestellt, ist seit 28 inaktiv)",
         "Durchschnittlicher Bestellrythmus (allgemein)",
         "Wie oft durchschnittlichen in den letzten 3 Monaten bestellt",
@@ -67,8 +69,7 @@ def hubspot_sync():
         "Rottkapechen Kunde",
         "Wann JV-Typeform ausgefüllt",
         "Wann eingeladen",
-        merchants."merchant_name" as "merchant who invited customer",
-        count(*) over (partition by "typ") as num_of_mails
+        merchants."merchant_name" as "merchant who invited customer"        
         FROM
         prod_info_layer.customer_hubspot_upload chu
         left join
@@ -76,11 +77,21 @@ def hubspot_sync():
         on chu."Parent ID" = main."id_customer"
         left join merchants
         on chu."Parent ID" = merchants."fk_customer"
-        where  "email" is null or ("email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%')
+        where 
+        "E-Mail Adresse Owner" not like '%%kollex.io%%' and "E-Mail Adresse Owner" not like '%%kollex.de%%' and "E-Mail Adresse Owner" not like '%%kollextest.de%%'
+           and 
+           "E-Mail Adresse Owner" not like '%%kollex-demo.io%%' and "E-Mail Adresse Owner" not like '%%kollex-demo.de%%'
+           and 
+           "Customer Status" not like 'Merchant Aktivierung austehend')
+    select * from filter_email 
+    where 
+    "email" is null 
+    or 
+        "email" not like '%%kollex.io%%' and "email" not like '%%kollex.de%%'
         """,
         con=pg_engine,
     )
-
+    df["Number Of Orders"] = df["Number Of Orders"].astype(str)
     gsheet_credentials = {
         "type": Variable.get("gsheet_creds_type"),
         "project_id": Variable.get("gsheet_creds_project_id"),
@@ -102,26 +113,25 @@ def hubspot_sync():
 
     ws = sh.worksheet(sheet_name)
     # Get the existing data as a dataframe
-    sheet_as_df = gd.get_as_dataframe(ws)
-    # Append the new dataframe to the existing dataframe
-    df.columns = [c.replace(" ", "_") for c in df.columns]
-    sheet_as_df.columns = [c.replace(" ", "_") for c in sheet_as_df.columns]
-
-    df["Customer_UUID"] = df["Customer_UUID"].astype(str)
-    sheet_as_df["Customer_UUID"] = sheet_as_df["Customer_UUID"].astype(str)
-
-    current_ids = sheet_as_df["Customer_UUID"].tolist()
-    new_ids = df["Customer_UUID"].tolist()
-    missing_ids = list(set(new_ids) - set(current_ids))
-    filter_df = df[df["Customer_UUID"].isin(missing_ids)]
-
-    df.columns = [c.replace("_", " ") for c in df.columns]
-    sheet_as_df.columns = [c.replace("_", " ") for c in sheet_as_df.columns]
-    filter_df.columns = [c.replace("_", " ") for c in filter_df.columns]
-
-    appended_df = sheet_as_df.append(filter_df)
+    # sheet_as_df = gd.get_as_dataframe(ws)
+    # # Append the new dataframe to the existing dataframe
+    # df.columns = [c.replace(" ", "_") for c in df.columns]
+    # sheet_as_df.columns = [c.replace(" ", "_") for c in sheet_as_df.columns]
+    #
+    # df["Customer_UUID"] = df["Customer_UUID"].astype(str)
+    # sheet_as_df["Customer_UUID"] = sheet_as_df["Customer_UUID"].astype(str)
+    #
+    # current_ids = sheet_as_df["Customer_UUID"].tolist()
+    # new_ids = df["Customer_UUID"].tolist()
+    # missing_ids = list(set(new_ids) - set(current_ids))
+    # filter_df = df[df["Customer_UUID"].isin(missing_ids)]
+    #
+    # df.columns = [c.replace("_", " ") for c in df.columns]
+    # sheet_as_df.columns = [c.replace("_", " ") for c in sheet_as_df.columns]
+    # filter_df.columns = [c.replace("_", " ") for c in filter_df.columns]
+    #
+    # appended_df = sheet_as_df.append(filter_df)
     # Clear the existing sheet
     ws.clear()
-    # Write the appended dataframe to the sheet
-    gd.set_with_dataframe(ws, appended_df)
+    gd.set_with_dataframe(ws, df)
     print("Dataframe has been appended to the sheet")

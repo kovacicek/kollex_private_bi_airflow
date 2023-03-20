@@ -61,10 +61,12 @@ SELECT
 	hub.merchant_who_invited_customer
 FROM hubspot as hub
     """
+    print("Reading sql.")
     df = pd.read_sql(
         sql,
         con=pg_engine,
     )
+    print("Data has been loaded.")
     df["Number Of Orders"] = df["Number Of Orders"].astype(str)
     df["Number Of Orders"] = df["Number Of Orders"].replace("nan", "0")
     gsheet_credentials = {
@@ -87,26 +89,6 @@ FROM hubspot as hub
     sh = gc.open_by_url(Variable.get("HUBSPOT_SPREADSHEET"))
 
     ws = sh.worksheet(sheet_name)
-    # Get the existing data as a dataframe
-    # sheet_as_df = gd.get_as_dataframe(ws)
-    # # Append the new dataframe to the existing dataframe
-    # df.columns = [c.replace(" ", "_") for c in df.columns]
-    # sheet_as_df.columns = [c.replace(" ", "_") for c in sheet_as_df.columns]
-    #
-    # df["Customer_UUID"] = df["Customer_UUID"].astype(str)
-    # sheet_as_df["Customer_UUID"] = sheet_as_df["Customer_UUID"].astype(str)
-    #
-    # current_ids = sheet_as_df["Customer_UUID"].tolist()
-    # new_ids = df["Customer_UUID"].tolist()
-    # missing_ids = list(set(new_ids) - set(current_ids))
-    # filter_df = df[df["Customer_UUID"].isin(missing_ids)]
-    #
-    # df.columns = [c.replace("_", " ") for c in df.columns]
-    # sheet_as_df.columns = [c.replace("_", " ") for c in sheet_as_df.columns]
-    # filter_df.columns = [c.replace("_", " ") for c in filter_df.columns]
-    #
-    # appended_df = sheet_as_df.append(filter_df)
-    # Clear the existing sheet
     ws.clear()
     gd.set_with_dataframe(ws, df)
     print("Dataframe has been appended to the sheet")

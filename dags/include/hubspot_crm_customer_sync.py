@@ -89,6 +89,20 @@ FROM hubspot as hub
     sh = gc.open_by_url(Variable.get("HUBSPOT_SPREADSHEET"))
 
     ws = sh.worksheet(sheet_name)
-    ws.clear()
-    gd.set_with_dataframe(ws, df)
-    print("Dataframe has been appended to the sheet")
+
+    print("Get existing sheet.")
+    try:
+        existing_data = ws.get_all_records()
+        df_existing = pd.DataFrame(existing_data)
+    except gs.exceptions.APIError:
+        df_existing = pd.DataFrame()
+
+    if not df_existing.empty:
+        print("Comparing data.")
+        df_diff = df[~df["customer_uuid"].isin(df_existing["customer_uuid"])]
+    else:
+        df_diff = df
+
+    # Append new rows to worksheet
+    gd.set_with_dataframe(ws, df_diff, include_column_header=True, row=1)
+    print("Data has been appended to the sheet")

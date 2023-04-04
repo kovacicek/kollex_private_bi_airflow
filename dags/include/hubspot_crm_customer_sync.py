@@ -20,7 +20,7 @@ def hubspot_sync():
 
     sheet_name = Variable.get("HUBSPOT_SHEET_NAME")
     sql = """
-      WITH hubspot AS (
+     WITH hubspot AS (
     SELECT 
         *, 
         CASE 
@@ -32,7 +32,7 @@ def hubspot_sync():
     FROM prod_info_layer.customer_hubspot_upload
 )
 SELECT 
-    hub."customer_uuid",
+    distinct(hub."customer_uuid"),
     hub."parent_customer_name",
     hub."parent_customer_creation_date",
     hub."parent_customer_owner_first_name",

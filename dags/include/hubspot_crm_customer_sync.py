@@ -20,46 +20,46 @@ def hubspot_sync():
 
     sheet_name = Variable.get("HUBSPOT_SHEET_NAME")
     sql = """
-       WITH hubspot AS (
-        SELECT 
-            *, 
-            CASE 
-                WHEN parent_customer_owner_lead_source LIKE '%%Krombacher Brauerei%%' THEN REPLACE(parent_customer_owner_lead_source, 'Krombacher Brauerei', 'Krombacher')
-                WHEN parent_customer_owner_lead_source LIKE '%%krombacher%%' THEN REPLACE(parent_customer_owner_lead_source, 'krombacher', 'Krombacher')
-                ELSE parent_customer_owner_lead_source
-            END AS parent_customer_owner_lead_source_updated
-        FROM prod_info_layer.customer_hubspot_upload
-        )
-
-        SELECT 
-        hub."customer_uuid",
-        hub."parent_customer_name",
-        hub."parent_customer_creation_date",
-        hub."parent_customer_owner_first_name",
-        hub."parent_customer_owner_last_name",
-        hub."parent_customer_owner_email",
-        hub."parent_customer_owner_mobile_phone",
-        hub."parent_customer_owner_lead_source_updated" AS "parent_customer_owner_lead_source",
-        hub."Wann JV-Typeform ausgefüllt",
-        hub."type",
-        hub."First Order Date",
-        hub."Child Customer Name",
-        hub."Customer Status",
-        hub."Number Of Orders",
-        hub."Status Last Order",
-        hub."Status Last Supplier Request",
-        hub."street",
-        hub."PLZ",
-        hub."Ort",
-        hub."Wann zuletzt bestellt",
-        hub."Gilt als Aktiv",
-        hub."Gilt als inaktiv (hat bereits bestellt, ist seit 28 inaktiv)",
-        hub."Registrierter Kunde ohne Bestellung",
-        hub."Wie oft durchschnittlichen in den letzten 3 Monaten bestellt",
-        hub."Durchschnittlicher Bestellrythmus (allgemein)",
-        hub."Wann eingeladen",
-        hub.merchant_who_invited_customer
-        FROM hubspot as hub
+     WITH hubspot AS (
+    SELECT 
+        *, 
+        CASE 
+            WHEN parent_customer_owner_lead_source LIKE '%%Krombacher Brauerei%%' THEN REPLACE(parent_customer_owner_lead_source, 'Krombacher Brauerei', 'Krombacher')
+            WHEN parent_customer_owner_lead_source LIKE '%%krombacher%%' THEN REPLACE(parent_customer_owner_lead_source, 'krombacher', 'Krombacher')
+            WHEN parent_customer_owner_lead_source LIKE '%%bitburger%%' THEN REPLACE(parent_customer_owner_lead_source, 'bitburger', 'Bitburger')
+            ELSE parent_customer_owner_lead_source
+        END AS parent_customer_owner_lead_source_updated
+    FROM prod_info_layer.customer_hubspot_upload
+)
+SELECT 
+    distinct(hub."customer_uuid"),
+    hub."parent_customer_name",
+    hub."parent_customer_creation_date",
+    hub."parent_customer_owner_first_name",
+    hub."parent_customer_owner_last_name",
+    hub."parent_customer_owner_email",
+    hub."parent_customer_owner_mobile_phone",
+    hub."parent_customer_owner_lead_source_updated" AS "parent_customer_owner_lead_source",
+    hub."Wann JV-Typeform ausgefüllt",
+    hub."type",
+    hub."First Order Date",
+    hub."Child Customer Name",
+    hub."Customer Status",
+    hub."Number Of Orders",
+    hub."Status Last Order",
+    hub."Status Last Supplier Request",
+    hub."street",
+    hub."PLZ",
+    hub."Ort",
+    hub."Wann zuletzt bestellt",
+    hub."Gilt als Aktiv",
+    hub."Gilt als inaktiv (hat bereits bestellt, ist seit 28 inaktiv)",
+    hub."Registrierter Kunde ohne Bestellung",
+    hub."Wie oft durchschnittlichen in den letzten 3 Monaten bestellt",
+    hub."Durchschnittlicher Bestellrythmus (allgemein)",
+    hub."Wann eingeladen",
+    hub.merchant_who_invited_customer
+FROM hubspot AS hub
     """
     print("Reading sql.")
     df = pd.read_sql(
@@ -67,6 +67,10 @@ def hubspot_sync():
         con=pg_engine,
     )
     print("Data has been loaded.")
+    print("Cleaning data.")
+    df["Wann JV-Typeform ausgefüllt"] = df["Wann JV-Typeform ausgefüllt"].apply(
+        lambda x: pd.to_datetime(x).strftime("%Y-%m-%d") if x else x
+    )
     df["Number Of Orders"] = df["Number Of Orders"].astype(str)
     df["Number Of Orders"] = df["Number Of Orders"].replace("nan", "0")
     gsheet_credentials = {
@@ -91,9 +95,21 @@ def hubspot_sync():
     ws = sh.worksheet(sheet_name)
 
     print("Get existing sheet.")
+    for col in df.columns:
+        df[col] = df[col].astype(str)
+        df[col] = df[col].replace("nan", "")
+        df[col] = df[col].replace("None", "")
+
     try:
-        existing_data = ws.get_all_records()
-        df_existing = pd.DataFrame(existing_data)
+        existing_data = ws.get_all_values()
+        if existing_data:
+            df_existing = pd.DataFrame(
+                existing_data[1:], columns=existing_data[0]
+            )
+        else:
+            header_row = df.columns.tolist()
+            ws.append_row(header_row)
+            df_existing = pd.DataFrame()
     except gs.exceptions.APIError:
         df_existing = pd.DataFrame()
 
@@ -103,6 +119,9 @@ def hubspot_sync():
     else:
         df_diff = df
 
-    # Append new rows to worksheet
-    gd.set_with_dataframe(ws, df_diff, include_column_header=True, row=1)
-    print("Data has been appended to the sheet")
+    if not df_diff.empty:
+        print("Appending new data.")
+        new_data = df_diff.values.tolist()
+        ws.append_rows(new_data)
+    else:
+        print("No new data to append.")

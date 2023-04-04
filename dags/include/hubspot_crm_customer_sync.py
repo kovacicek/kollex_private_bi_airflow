@@ -95,9 +95,21 @@ FROM hubspot AS hub
     ws = sh.worksheet(sheet_name)
 
     print("Get existing sheet.")
+    for col in df.columns:
+        df[col] = df[col].astype(str)
+        df[col] = df[col].replace("nan", "")
+        df[col] = df[col].replace("None", "")
+
     try:
-        existing_data = ws.get_all_records()
-        df_existing = pd.DataFrame(existing_data)
+        existing_data = ws.get_all_values()
+        if existing_data:
+            df_existing = pd.DataFrame(
+                existing_data[1:], columns=existing_data[0]
+            )
+        else:
+            header_row = df.columns.tolist()
+            ws.append_row(header_row)
+            df_existing = pd.DataFrame()
     except gs.exceptions.APIError:
         df_existing = pd.DataFrame()
 
@@ -107,6 +119,9 @@ FROM hubspot AS hub
     else:
         df_diff = df
 
-    # Append new rows to worksheet
-    gd.set_with_dataframe(ws, df_diff, include_column_header=True, row=1)
-    print("Data has been appended to the sheet")
+    if not df_diff.empty:
+        print("Appending new data.")
+        new_data = df_diff.values.tolist()
+        ws.append_rows(new_data)
+    else:
+        print("No new data to append.")

@@ -1,9 +1,10 @@
 import json
-from logging import getLogger, INFO, WARN
-from sqlalchemy import create_engine
+from logging import getLogger
 import pandas as pd
 
 from airflow.models import Variable
+
+from utils.db import prepare_mysql_akeneo_connection, prepare_pg_connection
 
 
 def run_full_load():
@@ -13,25 +14,12 @@ def run_full_load():
 
     chunk_size = 1000
 
-    mysql_host = Variable.get("MYSQL_HOST")
-    mysql_port = Variable.get("MYSQL_PORT")
-    mysql_schema = Variable.get("MYSQL_DATABASE_akeneo")
-    mysql_user = Variable.get("MYSQL_USERNAME")
-    mysql_password = Variable.get("MYSQL_PASSWORD")
-    mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
-    mysql_engine = create_engine(f"{mysql_connect_string}", echo=False)
+    mysql_engine = prepare_mysql_akeneo_connection()
+    pg_engine = prepare_pg_connection()
 
-    pg_host = Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password = Variable.get("PG_PASSWORD_WRITE")
-    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
-    pg_database = Variable.get("PG_DATABASE")
     pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
     pg_info_schema = Variable.get("PG_INFO_SCHEMA")
-    pg_connect_string = (
-        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
+    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
 
     df_all_skus = pd.read_sql(
         """select * from {pg_raw_schema}.{pg_tables_to_use}"""

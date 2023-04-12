@@ -18,10 +18,20 @@ def run_delta_load():
     mysql_schema = Variable.get("MYSQL_DATABASE_akeneo")
     mysql_user = Variable.get("MYSQL_USERNAME")
     mysql_password = Variable.get("MYSQL_PASSWORD")
-
-    # mysql_tables_to_copy =
     mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
     mysql_engine = create_engine(f"{mysql_connect_string}", echo=True)
+
+    pg_host = Variable.get("PG_HOST")
+    pg_user = Variable.get("PG_USERNAME_WRITE")
+    pg_password = Variable.get("PG_PASSWORD_WRITE")
+    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
+    pg_database = Variable.get("PG_DATABASE")
+    pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
+    pg_info_schema = Variable.get("PG_INFO_SCHEMA")
+    pg_connect_string = (
+        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
+    )
+    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 
     # Reading the product tables from Akeneo
     df_product = pd.read_sql(
@@ -184,18 +194,6 @@ def run_delta_load():
         return
     print("finished reading Akeneo Data and will Start processing now")
 
-    pg_host = Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password = Variable.get("PG_PASSWORD_WRITE")
-    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
-    pg_database = Variable.get("PG_DATABASE")
-    pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
-    pg_info_schema = Variable.get("PG_INFO_SCHEMA")
-    pg_connect_string = (
-        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
-
     connection = pg_engine.connect()
     identifiers_old = (
         df_product["identifier"]
@@ -223,11 +221,6 @@ def run_delta_load():
     count = 0
 
     # Extracting Active Merchants
-
-    pg_connect_string = (
-        f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
 
     merchants_active = pd.read_sql(
         """
@@ -446,7 +439,6 @@ def run_delta_load():
         )
     print("finished creating merchant Columns")
     # Counting Enabled SKUs
-    number_of_merchants = merchants_active["merchant_key"].size
     enabelment_columns = [col for col in chunk.columns if "_enabled" in col]
     enabled_df = chunk[enabelment_columns]
     enabled_df["enablement"] = (
@@ -475,10 +467,6 @@ def run_delta_load():
     chunk.drop("merchant_key_enabled", axis=1, inplace=True, errors="ignore")
 
     pg_tables_to_use = Variable.get("PG_ALL_SKUS")
-    pg_connect_string = (
-        f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
     chunk.drop_duplicates(subset=["identifier"], inplace=True)
 
     chunk.to_sql(

@@ -203,11 +203,6 @@ def run_full_load():
 
     # Extracting Active Merchants
 
-    pg_connect_string = (
-        f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
-
     merchants_active = pd.read_sql(
         """
                                     SELECT
@@ -476,7 +471,6 @@ def run_full_load():
             )
 
         # Counting Enabled SKUs
-        number_of_merchants = merchants_active["merchant_key"].size
         enabelment_columns = [col for col in chunk.columns if "_enabled" in col]
         enabled_df = chunk[enabelment_columns]
         enabled_df["enablement"] = (
@@ -484,8 +478,7 @@ def run_full_load():
         )
         chunk["enablement"] = enabled_df["enablement"]
 
-        #################################
-        ######## Droping the JSON columns
+        # Drop the JSON columns
         print("Droping JSON Columns")
         chunk.drop(
             ["raw_values_model", "raw_values", "raw_values_product"],
@@ -500,8 +493,7 @@ def run_full_load():
             errors="ignore",
         )
 
-        ####################################################
-        ######################### Writing the results in DWH
+        # Writing the results in DWH
         # print("Writing to the DWH")
 
         chunk.drop("is_enabled", axis=1, inplace=True, errors="ignore")

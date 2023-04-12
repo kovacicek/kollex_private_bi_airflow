@@ -21,9 +21,26 @@ def run_full_load():
     mysql_connect_string = f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_schema}"
     mysql_engine = create_engine(f"{mysql_connect_string}", echo=False)
 
+    pg_host = Variable.get("PG_HOST")
+    pg_user = Variable.get("PG_USERNAME_WRITE")
+    pg_password = Variable.get("PG_PASSWORD_WRITE")
+    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
+    pg_database = Variable.get("PG_DATABASE")
+    pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
+    pg_info_schema = Variable.get("PG_INFO_SCHEMA")
+    pg_connect_string = (
+        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
+    )
+    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
+
+    df_all_skus = pd.read_sql(
+        """select * from {pg_raw_schema}.{pg_tables_to_use}"""
+    )
+    pg_identifiers = df_all_skus["identifier"].to_list()
+    pg_identifiers = ",".join([f"'{str(_id)}'" for _id in pg_identifiers])
     # Reading the product tables from Akeneo
     df_product = pd.read_sql(
-        """                             
+        f"""                             
             select distinct
             pcp.identifier
             , gfghproduct.sku as "sku_gfghdata"
@@ -171,28 +188,17 @@ def run_full_load():
                             where sku is not null
                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
+                where identifier not in ({pg_identifiers})
             """,
         con=mysql_engine,
         chunksize=chunk_size,
     )
 
-    pg_host = Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password = Variable.get("PG_PASSWORD_WRITE")
-    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
-    pg_database = Variable.get("PG_DATABASE")
-    pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
-    pg_info_schema = Variable.get("PG_INFO_SCHEMA")
-    pg_connect_string = (
-        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
+    # connection = pg_engine.connect()
 
-    connection = pg_engine.connect()
-
-    connection.execute(
-        f"drop table if exists {pg_raw_schema}.{pg_tables_to_use};"
-    )
+    # connection.execute(
+    #     f"drop table if exists {pg_raw_schema}.{pg_tables_to_use};"
+    # )
     count = 0
 
     # Extracting Active Merchants
@@ -250,9 +256,6 @@ def run_full_load():
 
         # adding Pim categories
         print("extracting SKU Fact Consolidating Those columns")
-
-        pg_connect_string = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-        pg_engine = create_engine(f"{pg_connect_string}", echo=False)
         sku_category_fact = pd.read_sql_table(
             "sku_category_fact",
             con=pg_engine,

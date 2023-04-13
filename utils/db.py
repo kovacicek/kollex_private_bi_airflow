@@ -8,7 +8,7 @@ def prepare_pg_connection():
     pg_password = Variable.get("PG_PASSWORD_WRITE")
     pg_database = Variable.get("PG_DATABASE")
     pg_connect_string = (
-        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
+        f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
     )
     pg_engine = create_engine(f"{pg_connect_string}", echo=False)
     return pg_engine

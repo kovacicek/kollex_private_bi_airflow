@@ -109,3 +109,4 @@ SQLAlchemy
 sqlparse
 stack-data
 
+airflow

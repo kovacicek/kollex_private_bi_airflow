@@ -97,7 +97,7 @@ with DAG(
         task_id='run_full_load',
         python_callable=run_full_load,
         dag=dag,
-        rigger_rule="none_failed",
+        trigger_rule="none_failed",
         retries=5
     )
     delta_load = PythonOperator(

@@ -4,7 +4,7 @@ import pandas as pd
 
 from airflow.models import Variable
 
-from utils.db import prepare_mysql_akeneo_connection, prepare_pg_connection
+from db import prepare_mysql_akeneo_connection, prepare_pg_connection
 
 
 def run_full_load():

@@ -5,7 +5,7 @@ import warnings
 
 from airflow.models import Variable
 
-from utils.db import prepare_pg_connection, prepare_mysql_akeneo_connection
+from db import prepare_pg_connection, prepare_mysql_akeneo_connection
 
 
 def run_delta_load():

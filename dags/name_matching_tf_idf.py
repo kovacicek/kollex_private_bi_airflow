@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from scipy.sparse import csr_matrix
 import sparse_dot_topn.sparse_dot_topn as ct
-from utils.db import postgres_engine_factory
+from include.db import postgres_engine_factory
 
 
 logging.getLogger().setLevel(logging.INFO)

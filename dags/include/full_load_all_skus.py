@@ -22,7 +22,8 @@ def run_full_load():
     pg_tables_to_use = Variable.get("PG_ALL_SKUS")
 
     df_all_skus = pd.read_sql(
-        """select * from {pg_raw_schema}.{pg_tables_to_use}"""
+        """select * from {pg_raw_schema}.{pg_tables_to_use}""",
+        con=pg_engine
     )
     pg_identifiers = df_all_skus["identifier"].to_list()
     pg_identifiers = ",".join([f"'{str(_id)}'" for _id in pg_identifiers])

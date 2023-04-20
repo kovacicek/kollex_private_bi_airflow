@@ -1,198 +1,503 @@
+import json
+from logging import getLogger
 import pandas as pd
 
-from airflow import DAG
 from airflow.models import Variable
-# from airflow.operators.python_operator import PythonOperator
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import BranchPythonOperator, PythonOperator
 
-from datetime import datetime, timedelta
-from sqlalchemy import create_engine
-
-from include.delta_load_all_skus import run_delta_load
-from include.full_load_all_skus import run_full_load
-from include.dbt_run_raw_layer import dbt_run_raw_layers
-from include.dbt_run_all_layers import dbt_run_all_layers
-from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.db import prepare_mysql_akeneo_connection, prepare_pg_connection
 
 
-def branch_on():
-    # create engine
-    pg_host = Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password = Variable.get("PG_PASSWORD_WRITE")
-    pg_database = Variable.get("PG_DATABASE")
-    pg_schema = Variable.get("PG_RAW_SCHEMA")
-    pg_connect_string = f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
-    # get merchants active
+def run_full_load():
+    logger = getLogger()
+    logger.setLevel("INFO")
+
+    chunk_size = 1000
+
+    mysql_engine = prepare_mysql_akeneo_connection()
+    pg_engine = prepare_pg_connection()
+
+    pg_raw_schema = Variable.get("PG_RAW_SCHEMA")
+    pg_info_schema = Variable.get("PG_INFO_SCHEMA")
+    pg_tables_to_use = Variable.get("PG_ALL_SKUS")
+    # Reading the product tables from Akeneo
+    df_product = pd.read_sql(
+        """                             
+            select distinct
+            pcp.identifier
+            , gfghproduct.sku as "sku_gfghdata"
+            , base_unit_content
+            , base_unit_content_uom
+            , no_of_base_units
+            , gtin
+            , kollex_active
+            , manufacturer
+            , refund_value
+            , sales_unit_pkgg
+            , name
+            , active
+            , category_code
+            , direct_shop_release
+
+
+            ,cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.title."<all_channels>"."<all_locales>"' ) ,
+                                     json_extract( pcpm2.raw_values , '$.title."<all_channels>"."<all_locales>"' )
+                            ,        json_extract( pcp.raw_values , '$.title."<all_channels>"."<all_locales>"' )  ),'"','') as char) as title
+        , cast(replace(coalesce( pcpm.code , pcpm2.code ),'"','')as char) as l1_code
+
+        , cast(replace(coalesce( json_extract( pcp.raw_values , '$.brand."<all_channels>"."<all_locales>"' ),
+                                  json_extract( pcpm.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) ,
+                                  json_extract( pcpm2.raw_values , '$.brand."<all_channels>"."<all_locales>"' ) )      ,'"',''            )as char) as brand
+
+
+
+        , cast(replace(coalesce( json_extract( pcp.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' )
+                                ,json_extract( pcpm.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ,
+                                 json_extract( pcpm2.raw_values , '$.manufacturer_name."<all_channels>"."<all_locales>"' ) ) ,'"',''       )as char) as manufacturer_name
+
+        , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_single_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.detail_type_single_unit."<all_channels>"."<all_locales>"' )
+                    ,       json_extract( pcp.raw_values ,  '$.detail_type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )as char)  as detail_type_single_unit
+
+         , cast(replace(coalesce( json_extract( pcpm.raw_values , '$.type_single_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.type_single_unit."<all_channels>"."<all_locales>"' )
+                    ,       json_extract( pcp.raw_values ,  '$.type_single_unit."<all_channels>"."<all_locales>"' )   ),'"','' )as char)  as type_single_unit
+
+
+        , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.net_content."<all_channels>"."<all_locales>"' )
+                        ,   json_extract( pcp.raw_values ,    '$.net_content."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content
+        ,  cast(replace(coalesce(
+                    json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
+                    json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )
+                ,   json_extract( pcp.raw_values ,   '$.golden_record_level1."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as release_l1
+
+        ,  cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.foto_release_hash."<all_channels>"."<all_locales>"' )
+                ,             json_extract( pcp.raw_values ,  '$.foto_release_hash."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as foto_release_hash
+
+            , cast(replace(coalesce(  json_extract( pcpm.raw_values , '$.amount_single_unit."<all_channels>"."<all_locales>"' ) ,
+                                json_extract( pcpm2.raw_values ,'$.amount_single_unit."<all_channels>"."<all_locales>"' )
+                ,                json_extract( pcp.raw_values ,  '$.amount_single_unit."<all_channels>"."<all_locales>"' )),'"','' )as char) as amount_single_unit
+
+        , cast(replace(coalesce(
+                            json_extract( pcp.raw_values ,  '$.status_base."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm.raw_values ,  '$.status_base."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.status_base."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as status_base
+
+        ,  cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.net_content_uom."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.net_content_uom."<all_channels>"."<all_locales>"' ),
+                            json_extract( pcp.raw_values ,   '$.net_content_uom."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content_uom
+
+        , cast(replace(coalesce(
+                            json_extract( pcp.raw_values ,  '$.net_content_liter."<all_channels>"."<all_locales>"' ),
+                            json_extract( pcpm.raw_values ,  '$.net_content_liter."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.net_content_liter."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as net_content_liter
+
+            , cast(replace(coalesce(
+                                json_extract( pcp.raw_values ,  '$.contact_info."<all_channels>"."<all_locales>"' ) ,
+                                json_extract( pcpm.raw_values ,  '$.contact_info."<all_channels>"."<all_locales>"' ) ,
+                                json_extract( pcpm2.raw_values , '$.contact_info."<all_channels>"."<all_locales>"' ) ),'"','' )as char) as contact_info
+
+        , cast(replace(coalesce( json_extract( pcp.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ),
+                                json_extract( pcpm.raw_values ,  '$.golden_record_level1."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.golden_record_level1."<all_channels>"."<all_locales>"' )),'"','' )as char) as golden_record_level1
+
+        , cast(replace(coalesce( json_extract( pcpm.raw_values ,  '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values , '$.type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,   '$.type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as type_packaging_unit
+
+        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.structure_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,  '$.structure_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as structure_packaging_unit
+
+        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.shop_enabled."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.shop_enabled."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,  '$.shop_enabled."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as shop_enabled
+
+        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.gtin_single_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,  '$.gtin_single_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as gtin_single_unit
+
+                 ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.gtin_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.gtin_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,  '$.gtin_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as gtin_packaging_unit
+
+
+
+        ,  cast(replace(coalesce( json_extract( pcpm.raw_values , '$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcpm2.raw_values ,'$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' ) ,
+                            json_extract( pcp.raw_values ,  '$.detail_type_packaging_unit."<all_channels>"."<all_locales>"' )  ),'"','' )as char) as detail_type_packaging_unit
+        ,pcp.raw_values as raw_values_product
+        ,pcp.updated
+       ,cast(case
+           when pcpm2.code is null
+               then pcpm.code
+           else pcpm2.code
+           end as char) as base_code
+    , case when coalesce(pcpm.code,pcpm2.code) like 'm-%' then true else false end  is_manual
+
+       ,pcp.created
+
+        from akeneo.pim_catalog_product                     pcp
+                left join akeneo.pim_catalog_product_model pcpm
+                            on pcpm.id = pcp.product_model_id
+                left join akeneo.pim_catalog_product_model pcpm2
+                            on pcpm.parent_id = pcpm2.id
+
+
+                left join (select max(sku)                   as sku,
+                                MAX(base_unit_content)     as base_unit_content,
+                                MAX(base_unit_content_uom) as base_unit_content_uom,
+                                MAX(no_of_base_units)         no_of_base_units,
+                                MAX(gtin)                  as gtin,
+
+                                MAX(kollex_active)         as kollex_active,
+                                MAX(manufacturer)          as manufacturer,
+
+
+                                MAX(refund_value)          as refund_value,
+
+
+                                MAX(sales_unit_pkgg)       as sales_unit_pkgg,
+                                MAX(name)                  as name,
+                                MAX(active)                as active,
+                                MAX(category_code)            category_code,
+
+                                MAX(direct_shop_release)      direct_shop_release
+
+                            from gfghdata.product
+                            where sku is not null
+                            group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
+                left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
+            """,
+        con=mysql_engine,
+        chunksize=chunk_size,
+    )
+
+    connection = pg_engine.connect()
+
+    connection.execute(
+        f"drop table if exists {pg_raw_schema}.{pg_tables_to_use};"
+    )
+    count = 0
+
+    # Extracting Active Merchants
     merchants_active = pd.read_sql(
         """
-            SELECT
-                merchant_key
-            FROM
-                prod_raw_layer.merchants_new
-            UNION
-            SELECT
-                merchant_key
-            FROM
-                prod_raw_layer.merchants_active
-        """,
-        con=pg_engine
-    )
-    merchants_active = merchants_active[merchants_active["merchant_key"] != 'trinkkontor']
-    merchants_active = merchants_active[merchants_active["merchant_key"] != 'trinkkontor_trr']
-    merchants_active_count = pd.read_sql_table('current_merchant_active_count',
-                                               con=pg_engine,
-                                               schema=pg_schema)
-    print(merchants_active_count)
-    print(merchants_active['merchant_key'].size)
+                                    SELECT
+                                        merchant_key
+                                    FROM
+                                        prod_raw_layer.merchants_new
+                                    UNION
+                                    SELECT
+                                        merchant_key
+                                    FROM
+                                        prod_raw_layer.merchants_active
 
-    dt_now = datetime.now()
-    dt_trigger = datetime.now().replace(hour=17, minute=30, second=0, microsecond=0)
-    if dt_now > dt_trigger:
-        return ['run_full_load']
-    else:
-        if merchants_active['merchant_key'].size != merchants_active_count.loc[0, 'merchant_count']:
-            merchants_active_count.loc[0, 'merchant_count'] = merchants_active['merchant_key'].size
-            pg_tables_to_use = 'current_merchant_active_count'
-            merchants_active_count.to_sql(
-                pg_tables_to_use,
-                pg_engine,
-                schema=pg_schema,
-                if_exists='replace',
-                index=False
+                                  """,
+        con=pg_engine,
+    )
+    merchants_active = merchants_active[
+        merchants_active["merchant_key"] != "trinkkontor"
+    ]
+    merchants_active = merchants_active[
+        merchants_active["merchant_key"] != "trinkkontor_trr"
+    ]
+    merchants_active = merchants_active[
+        merchants_active["merchant_key"] != "merchant_key"
+    ]
+
+    for df_chunk in df_product:
+        chunk = df_chunk
+        print(
+            "######################################Processing Chunk Number "
+            + str(count)
+        )
+        chunk["manufacturer_gfgh_data"] = "|" + chunk["manufacturer"] + "|"
+
+        chunk.drop(
+            [
+                "title_2",
+                "net_content_2",
+                "brand_2",
+                "net_content_liter_2",
+                "contact_info_2",
+            ],
+            axis=1,
+            inplace=True,
+            errors="ignore",
+        )
+
+        # adding Pim categories
+        print("extracting SKU Fact Consolidating Those columns")
+
+        sku_category_fact = pd.read_sql_table(
+            "sku_category_fact",
+            con=pg_engine,
+            schema=pg_info_schema,
+        )
+        chunk = chunk.merge(
+            sku_category_fact,
+            how="inner",
+            left_on="identifier",
+            right_on="sku",
+            suffixes=("", "_y"),
+        )
+        chunk.drop(
+            chunk.filter(regex="_y$").columns.tolist(),
+            axis=1,
+            inplace=True,
+            errors="ignore",
+        )
+
+        # Translating attributes through attribute  values  in Akeneo
+
+        attribute_options = pd.read_sql(
+            """select distinct code,value from pim_catalog_attribute_option 
+                left join pim_catalog_attribute_option_value   
+                    on pim_catalog_attribute_option.id = pim_catalog_attribute_option_value.option_id""",
+            con=mysql_engine,
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="net_content_liter",
+            right_on="code",
+            how="left",
+        )
+        chunk["net_content_liter"] = (
+            chunk["value"].combine_first(chunk["net_content_liter"]).astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="net_content_uom",
+            right_on="code",
+            how="left",
+        )
+        chunk["net_content_uom"] = (
+            chunk["value"].combine_first(chunk["net_content_uom"]).astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="type_single_unit",
+            right_on="code",
+            how="left",
+        )
+        chunk["type_single_unit"] = chunk["value"].combine_first(
+            chunk["type_single_unit"]
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="amount_single_unit",
+            right_on="code",
+            how="left",
+        )
+        chunk["amount_single_unit"] = (
+            chunk["value"]
+            .combine_first(chunk["amount_single_unit"])
+            .astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="structure_packaging_unit",
+            right_on="code",
+            how="left",
+        )
+        chunk["structure_packaging_unit"] = (
+            chunk["value"]
+            .combine_first(chunk["structure_packaging_unit"])
+            .astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="type_packaging_unit",
+            right_on="code",
+            how="left",
+        )
+        chunk["type_packaging_unit"] = (
+            chunk["value"]
+            .combine_first(chunk["type_packaging_unit"])
+            .astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="golden_record_level1",
+            right_on="code",
+            how="left",
+        )
+        chunk["golden_record_level1"] = (
+            chunk["value"]
+            .combine_first(chunk["golden_record_level1"])
+            .astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="status_base",
+            right_on="code",
+            how="left",
+        )
+        chunk["status_base"] = (
+            chunk["value"].combine_first(chunk["status_base"]).astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options, left_on="brand", right_on="code", how="left"
+        )
+        chunk["brand"] = (
+            chunk["value"].combine_first(chunk["brand"]).astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="amount_single_unit",
+            right_on="code",
+            how="left",
+        )
+        chunk["amount_single_unit"] = (
+            chunk["value"]
+            .combine_first(chunk["amount_single_unit"])
+            .astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        chunk = chunk.merge(
+            attribute_options,
+            left_on="net_content_uom",
+            right_on="code",
+            how="left",
+        )
+        chunk["net_content_uom"] = (
+            chunk["value"].combine_first(chunk["net_content_uom"]).astype(str)
+        )
+        chunk.drop(
+            attribute_options.columns, inplace=True, axis=1, errors="ignore"
+        )
+
+        # Extracting Merchant Info
+        sorted_merchants = merchants_active.sort_values("merchant_key")
+        sorted_merchants = sorted_merchants[
+            sorted_merchants["merchant_key"] != "merchant_key"
+        ]
+
+        for merchant in sorted_merchants["merchant_key"]:
+            chunk[str(merchant) + "_enabled"] = (
+                chunk["raw_values_product"]
+                .apply(
+                    lambda x: json.loads(x)[
+                        "gfgh_" + str(merchant) + "_enabled"
+                    ]["<all_channels>"]["<all_locales>"]
+                    if "gfgh_" + str(merchant) + "_enabled" in json.dumps(x)
+                    else False
+                )
+                .astype(str)
             )
-            print("changed the count")
-            return ['run_full_load']
-        else:
-            return ['run_delta_load']
+            chunk[str(merchant) + "_id"] = (
+                chunk["raw_values_product"]
+                .apply(
+                    lambda x: json.loads(x)["gfgh_" + str(merchant) + "_id"][
+                        "<all_channels>"
+                    ]["<all_locales>"]
+                    if "gfgh_" + str(merchant) + "_id" in json.dumps(x)
+                    else None
+                )
+                .astype(str)
+            )
+            chunk[str(merchant) + "_freigabe"] = (
+                chunk["raw_values_product"]
+                .apply(
+                    lambda x: json.loads(x)[
+                        "freigabe_" + str(merchant) + "_id"
+                    ]["<all_channels>"]["<all_locales>"]
+                    if "freigabe_" + str(merchant) + "_id" in json.dumps(x)
+                    else None
+                )
+                .astype(str)
+            )
 
+        # Counting Enabled SKUs
+        number_of_merchants = merchants_active["merchant_key"].size
+        enabelment_columns = [col for col in chunk.columns if "_enabled" in col]
+        enabled_df = chunk[enabelment_columns]
+        enabled_df["enablement"] = (
+            enabled_df[enabled_df == "True"].count(axis=1) - 2
+        )
+        chunk["enablement"] = enabled_df["enablement"]
 
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email': ['airflow@example.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
+        #################################
+        ######## Droping the JSON columns
+        print("Droping JSON Columns")
+        chunk.drop(
+            ["raw_values_model", "raw_values", "raw_values_product"],
+            axis=1,
+            inplace=True,
+            errors="ignore",
+        )
+        chunk.drop(
+            ["family_id", "product_model_id", "family_variant_id"],
+            axis=1,
+            inplace=True,
+            errors="ignore",
+        )
 
-with DAG(
-    dag_id="PIM_Pipeline",
-    start_date=datetime.today() - timedelta(days=1),
-    schedule_interval="0 04-18/2 * * *",
-    concurrency=100,
-    catchup=False,
-    max_active_runs=1
-) as dag:
-    # t1, t2 and t3 are examples of tasks created by instantiating operators
-    data_dog_log = BashOperator(
-        task_id='Started_All_SKUs_DAG',
-        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-        dag=dag
-    )
-    full_load = PythonOperator(
-        task_id='run_full_load',
-        python_callable=run_full_load,
-        dag=dag,
-        trigger_rule="none_failed",
-        retries=5
-    )
-    delta_load = PythonOperator(
-        task_id='run_delta_load',
-        python_callable=run_delta_load,
-        dag=dag,
-        trigger_rule="none_failed",
-        retries=5
-    )
-    branch_operator = BranchPythonOperator(
-        task_id='choose_delta_or_full_load',
-        python_callable=branch_on
-    )
-    
-    copy_PIM_CATALOUG_PRODUCT_from_mySQL = PythonOperator(
-        task_id='copy_PIM_CATALOUG_PRODUCT_from_mySQL',
-        python_callable=My_SQL_to_Postgres,
-        op_kwargs={
-            'pg_schema': 'from_pim',
-            'pg_tables_to_use': 'cp_pim_catalog_product',
-            'mysql_tables_to_copy': 'pim_catalog_product',
-            'mysql_schema': 'akeneo',
-            'unique_column': 'id',
-            'delta_load': 'FULL_RELOAD',
-            'timestamp_column': ' updated',
-            'look_back_period': 0,
-            'chunksize_to_use': 2000
-        },
-        retries=5
-    )
-    copy_PIM_CATALOUG_PRODUCT_model_from_mySQL = PythonOperator(
-        task_id='copy_PIM_CATALOUG_PRODUCT_model_from_mySQL',
-        python_callable=My_SQL_to_Postgres,
-        op_kwargs={
-            'pg_schema': 'from_pim',
-            'pg_tables_to_use': 'cp_pim_catalog_product_model',
-            'mysql_tables_to_copy': 'pim_catalog_product_model',
-            'mysql_schema': 'akeneo',
-            'timestamp_column': 'updated',
-            'unique_column': 'id',
-            'delta_load': 'FULL_RELOAD',
-            'look_back_period': 0,
-            'chunksize_to_use': 10000
-        },
-        retries=5
-    )
-    copy_GFGH_DATA_from_mySQL = PythonOperator(
-        task_id='copy_GFGH_DATA_from_mySQL',
-        python_callable=My_SQL_to_Postgres,
-        op_kwargs={
-            'pg_schema': 'from_pim',
-            'pg_tables_to_use': 'cp_gfgh_product',
-            'mysql_tables_to_copy': 'product',
-            'timestamp_column': 'updated_at',
-            'mysql_schema': 'gfghdata',
-            'unique_column': 'id',
-            'delta_load': 'FULL_RELOAD',
-            'look_back_period': 0,
-            'chunksize_to_use': 10000
-        },
-        retries=5
-    )
-    dbt_job_raw_layers = PythonOperator(
-        task_id='dbt_job_raw_layers',
-        python_callable=dbt_run_raw_layers,
-        trigger_rule='all_success'
-    )
-    dbt_job_all_layers = PythonOperator(
-        task_id='dbt_run_all_layers',
-        python_callable=dbt_run_all_layers,
-        trigger_rule='all_success'
-    )
-    data_dog_log_final = BashOperator(
-        task_id='Finished_All_SKUs_fully',
-        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-        dag=dag,
-        trigger_rule="none_failed"
-    )
-    data_dog_log_middle = BashOperator(
-        task_id='Finished_delta_or_full_load',
-        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-        dag=dag,
-        trigger_rule="none_failed"
-    )
-    data_dog_log_middle_2 = BashOperator(
-        task_id='Finished_Copying_tables_from_MySQL',
-        bash_command='echo "{{ task_instance_key_str }} {{ ts }}"',
-        dag=dag,
-        trigger_rule="none_failed"
-    )
+        ####################################################
+        ######################### Writing the results in DWH
+        # print("Writing to the DWH")
 
+        chunk.drop("is_enabled", axis=1, inplace=True, errors="ignore")
+        chunk.drop("merchant_key_id", axis=1, inplace=True, errors="ignore")
+        chunk.drop(
+            "merchant_key_enabled", axis=1, inplace=True, errors="ignore"
+        )
+        chunk.drop_duplicates(subset=["identifier"], inplace=True)
 
-data_dog_log >> branch_operator >> [full_load, delta_load] >> data_dog_log_middle
-data_dog_log_middle >> [copy_PIM_CATALOUG_PRODUCT_model_from_mySQL,
-                        copy_GFGH_DATA_from_mySQL,
-                        copy_PIM_CATALOUG_PRODUCT_from_mySQL] >> data_dog_log_middle_2
-data_dog_log_middle_2 >> [dbt_job_raw_layers,
-                          dbt_job_all_layers] >> data_dog_log_final
+        pg_tables_to_use = pg_tables_to_use
+
+        chunk.to_sql(
+            pg_tables_to_use,
+            pg_engine,
+            schema=pg_raw_schema,
+            if_exists="append",
+            index=False,
+        )
+
+        print("##############Finished Writing to the DWH#############")
+        # print(chunk['title'])
+        count += 1
+    pg_engine.dispose()
+    mysql_engine.dispose()

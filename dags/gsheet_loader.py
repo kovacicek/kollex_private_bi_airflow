@@ -217,6 +217,17 @@ with DAG(
         },
         retries=5,
     )
+    COPY_PRIO_LIST = PythonOperator(
+        task_id="COPY_PRIO_LIST",
+        python_callable=run_gsheet_load,
+        op_kwargs={
+            "pg_schema": "sheet_loader",
+            "pg_tables_to_use": "prio_list",
+            "url": "https://docs.google.com/spreadsheets/d/1qoMyAAgWpvaXCnR6oQzdBP8Rdz5_axki2uUTxY0XSkI/edit#gid=1293755200",
+            "sheet_name": "prio",
+        },
+        retries=5,
+    )
     data_dog_log_final = DummyOperator(
         task_id="data_dog_log_final", retries=3, trigger_rule="none_failed"
     )
@@ -237,6 +248,7 @@ with DAG(
         COPY_MERCHANT_CS,
         COPY_BITBURGER_QR_LOAD,
         COPY_KROMBACHER_QR_LOAD,
+        COPY_PRIO_LIST,
     ]
     >> data_dog_log_final
 )

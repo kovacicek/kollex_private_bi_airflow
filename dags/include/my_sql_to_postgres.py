@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import pandas as pd
 from pandas import read_sql_table
 from sqlalchemy import create_engine, types
 from psycopg2 import connect
@@ -7,8 +9,7 @@ from airflow.models import Variable
 
 
 def my_sql_to_postgres(**kwargs):
-
-    ######Postgres Credentials############
+    # Postgres Credentials
     pg_host = Variable.get("PG_HOST")
     pg_user = Variable.get("PG_USERNAME_WRITE")
     pg_password = Variable.get("PG_PASSWORD_WRITE")
@@ -22,14 +23,14 @@ def my_sql_to_postgres(**kwargs):
         pool_pre_ping=True,
         pool_recycle=3600,
     )
-    #### Prams#############
+    # Params
     pg_schema = kwargs["pg_schema"]
     pg_tables_to_use = kwargs["pg_tables_to_use"]
     delta_load = kwargs["delta_load"]
     unique_column = kwargs["unique_column"]
     timestamp_column = kwargs["timestamp_column"]
 
-    ######My SQL Credentials############
+    # My SQL Credentials
     mysql_host = Variable.get("MYSQL_HOST")
     mysql_port = Variable.get("MYSQL_PORT")
     mysql_user = Variable.get("MYSQL_USERNAME")
@@ -70,10 +71,13 @@ def my_sql_to_postgres(**kwargs):
 
     elif delta_load == "UPSERT":
         df = read_sql(
-            f"""  select {unique_column} 
-                                from   {mysql_schema}.{mysql_tables_to_copy} 
-                                where  {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(current_date)+1 DAY
-                                AND    {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY""",
+            f"""
+            select {unique_column} 
+            from {mysql_schema}.{mysql_tables_to_copy} 
+            where 
+                {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(current_date) + 1 DAY
+                AND    {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+            """,
             con=mysql_engine,
         )
 
@@ -87,24 +91,29 @@ def my_sql_to_postgres(**kwargs):
         connection = pg_engine.connect()
 
         connection.execute(
-            f"delete from  {pg_schema}.{pg_tables_to_use} where id  in ({df_identifiers_to_delete}) "
+            f"delete from {pg_schema}.{pg_tables_to_use} where id in ({df_identifiers_to_delete})"
         )
         df = read_sql(
-            f"""  select * 
-                                from  {mysql_schema}.{mysql_tables_to_copy} 
-                                where {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(curdate())+1 DAY
-                                AND   {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY""",
+            f"""
+            select * 
+            from  {mysql_schema}.{mysql_tables_to_copy} 
+            where 
+                {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(curdate()) + 1 DAY
+                AND {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+            """,
             con=mysql_engine,
             chunksize=chunksize_to_use,
         )
         print("Finished Reading the table")
     elif delta_load == "INSERT_NEW_ROWS":
         df = read_sql(
-            f"""  select * 
-                                from {mysql_schema}.{mysql_tables_to_copy} 
-                                where   {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate())+1 DAY
-                                AND     {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate())-1 DAY
-                            """,
+            f"""
+            select * 
+            from {mysql_schema}.{mysql_tables_to_copy} 
+            where 
+                {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate()) + 1 DAY
+                AND {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+            """,
             con=mysql_engine,
             chunksize=chunksize_to_use,
         )
@@ -119,7 +128,7 @@ def my_sql_to_postgres(**kwargs):
         connection = connect(**pg_conn_args)
         cur = connection.cursor()
 
-        cur.execute(f"DROP TABLE if exists {pg_schema}.{pg_tables_to_use} ;")
+        cur.execute(f"DROP TABLE if exists {pg_schema}.{pg_tables_to_use};")
         connection.commit()
         print(
             "Table {}.{}, emptied before adding updated data.".format(
@@ -128,19 +137,21 @@ def my_sql_to_postgres(**kwargs):
         )
 
         df = read_sql(
-            f"""  select * 
-                                    from {mysql_schema}.{mysql_tables_to_copy} 
-                                    where   {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate())+{look_back_period} DAY
-                                  
-                                """,
+            f"""
+            select * 
+            from {mysql_schema}.{mysql_tables_to_copy} 
+            where {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate()) + {look_back_period} DAY
+            """,
             con=mysql_engine,
             chunksize=chunksize_to_use,
         )
         print("Finished Reading the table")
+    else:
+        df = pd.DataFrame()
     for i, df_chunk in enumerate(df):
         print(i, df_chunk.shape)
         if not df_chunk.empty:
-            # TODO fix this and make dtype flexible ( dict(column,table))
+            # TODO fix this and make dtype flexible (dict(column,table))
             # col_dtype = {dtype_column: types.JSON} if pg_table == dtype_table else None
             df_chunk["_updated_at"] = datetime.now()
             df_chunk.to_sql(

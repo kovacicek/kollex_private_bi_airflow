@@ -1,27 +1,12 @@
-def My_SQL_to_Postgres(**kwargs):
-    # os.chdir('include')
+from datetime import datetime
+from pandas import read_sql_table
+from sqlalchemy import create_engine, types
+from psycopg2 import connect
+from pandas import read_sql
+from airflow.models import Variable
 
-    # load_dotenv('enviroment_variables.env')
-    from datetime import datetime, timedelta
-    import time
-    from os import environ
-    from base64 import b64decode
-    from datetime import datetime
-    from logging import getLogger, INFO, WARN
-    from os import environ
-    from sys import exit as sys_exit
-    from os import environ
-    from pandas import read_sql_table
-    from sqlalchemy import create_engine, types
-    from sqlalchemy.exc import SQLAlchemyError
-    from psycopg2.extensions import register_adapter
-    from psycopg2.extras import Json
-    from psycopg2 import connect
-    import logging
-    import os
-    import requests
-    from pandas import read_sql
-    from airflow.models import Variable
+
+def my_sql_to_postgres(**kwargs):
 
     ######Postgres Credentials############
     pg_host = Variable.get("PG_HOST")

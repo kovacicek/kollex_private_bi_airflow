@@ -14,7 +14,7 @@ from include.delta_load_all_skus import run_delta_load
 from include.full_load_all_skus import run_full_load
 from include.dbt_run_raw_layer import dbt_run_raw_layers
 from include.dbt_run_all_layers import dbt_run_all_layers
-from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.my_sql_to_postgres import my_sql_to_postgres
 
 
 def branch_on():
@@ -127,7 +127,7 @@ with DAG(
 
     copy_PIM_CATALOUG_PRODUCT_from_mySQL = PythonOperator(
         task_id="copy_PIM_CATALOUG_PRODUCT_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_pim_catalog_product",
@@ -143,7 +143,7 @@ with DAG(
     )
     copy_PIM_CATALOUG_PRODUCT_model_from_mySQL = PythonOperator(
         task_id="copy_PIM_CATALOUG_PRODUCT_model_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_pim_catalog_product_model",
@@ -159,7 +159,7 @@ with DAG(
     )
     copy_GFGH_DATA_from_mySQL = PythonOperator(
         task_id="copy_GFGH_DATA_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_gfgh_product",

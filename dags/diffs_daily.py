@@ -12,7 +12,7 @@ from airflow.operators.bash import BashOperator
 from include.monday_api import run_monday_api
 
 from include.dbt_run_all_layers import dbt_run_all_layers
-from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.my_sql_to_postgres import my_sql_to_postgres
 from include.dbt_run_diffs import dbt_run_diffs
 from airflow.models import Variable
 
@@ -55,7 +55,7 @@ with DAG(
         dag=dag,
 
     )
-    copy_GFGH_DATA_cp_import = PythonOperator(task_id='copy_GFGH_DATA_cp_import', python_callable=My_SQL_to_Postgres,
+    copy_GFGH_DATA_cp_import = PythonOperator(task_id='copy_GFGH_DATA_cp_import', python_callable=my_sql_to_postgres,
                                               op_kwargs={  'pg_schema': 'from_pim'
                                                          , 'pg_tables_to_use': 'cp_gfgh_import'
                                                          , 'mysql_tables_to_copy': 'import'
@@ -67,7 +67,7 @@ with DAG(
                                                          , 'chunksize_to_use': 10000}
                                                 , retries=5
                                               )
-    copy_cp_gfgh_product_import = PythonOperator(task_id='copy_cp_gfgh_product_import', python_callable=My_SQL_to_Postgres,
+    copy_cp_gfgh_product_import = PythonOperator(task_id='copy_cp_gfgh_product_import', python_callable=my_sql_to_postgres,
                                                  op_kwargs={'pg_schema': 'from_pim'
                                                          , 'pg_tables_to_use': 'cp_gfgh_product_import'
                                                          , 'mysql_tables_to_copy': 'product_import'

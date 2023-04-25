@@ -1,28 +1,11 @@
 from datetime import datetime, timedelta
-import airflow
 from airflow import DAG
-
-
-# import psycopg2
-# import csv
-import io
-
-# from tkinter.messagebox import QUESTION
-# import mysql.connector
-import pandas as pd
-import os
-
-# import numpy as np
-import time
-import io
-import csv
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 import requests
 
-# from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
-from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.my_sql_to_postgres import my_sql_to_postgres
 from airflow.models import Variable
 
 
@@ -90,7 +73,7 @@ with DAG(
     )
     COPY_MERCHANT_CSV = PythonOperator(
         task_id="COPY_MERCHANT_CSV",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "csvexchange",
             "pg_tables_to_use": "merchants_csv",

@@ -228,6 +228,17 @@ with DAG(
         },
         retries=5,
     )
+    COPY_DIRECT_RELEASE = PythonOperator(
+        task_id="COPY_DIRECT_RELEASE",
+        python_callable=run_gsheet_load,
+        op_kwargs={
+            "pg_schema": "prod_raw_layer",
+            "pg_tables_to_use": "merchant_direct_release",
+            "url": "https://docs.google.com/spreadsheets/d/1qoMyAAgWpvaXCnR6oQzdBP8Rdz5_axki2uUTxY0XSkI/edit#gid=587897823",
+            "sheet_name": "direct_release",
+        },
+        retries=5,
+    )
     data_dog_log_final = DummyOperator(
         task_id="data_dog_log_final", retries=3, trigger_rule="none_failed"
     )
@@ -249,6 +260,7 @@ with DAG(
         COPY_BITBURGER_QR_LOAD,
         COPY_KROMBACHER_QR_LOAD,
         COPY_PRIO_LIST,
+        COPY_DIRECT_RELEASE
     ]
     >> data_dog_log_final
 )

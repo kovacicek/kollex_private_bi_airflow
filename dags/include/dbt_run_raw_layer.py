@@ -1,6 +1,7 @@
 import requests
 from airflow.models import Variable
 
+
 def dbt_run_raw_layers():
 
     my_token =Variable.get("dbt_token")

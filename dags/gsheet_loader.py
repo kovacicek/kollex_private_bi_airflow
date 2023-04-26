@@ -1,11 +1,28 @@
 from datetime import datetime, timedelta
+import airflow
 from airflow import DAG
+
+
+# import psycopg2
+# import csv
+import io
+
+# from tkinter.messagebox import QUESTION
+# import mysql.connector
+import pandas as pd
+import os
+
+# import numpy as np
+import time
+import io
+import csv
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 import requests
 
+# from dotenv import load_dotenv
 from include.gsheet_to_postgres import run_gsheet_load
-from include.my_sql_to_postgres import my_sql_to_postgres
+from include.my_sql_to_postgres import My_SQL_to_Postgres
 from airflow.models import Variable
 
 
@@ -73,7 +90,7 @@ with DAG(
     )
     COPY_MERCHANT_CSV = PythonOperator(
         task_id="COPY_MERCHANT_CSV",
-        python_callable=my_sql_to_postgres,
+        python_callable=My_SQL_to_Postgres,
         op_kwargs={
             "pg_schema": "csvexchange",
             "pg_tables_to_use": "merchants_csv",
@@ -211,6 +228,17 @@ with DAG(
         },
         retries=5,
     )
+    COPY_DIRECT_RELEASE = PythonOperator(
+        task_id="COPY_DIRECT_RELEASE",
+        python_callable=run_gsheet_load,
+        op_kwargs={
+            "pg_schema": "prod_raw_layer",
+            "pg_tables_to_use": "merchant_direct_release",
+            "url": "https://docs.google.com/spreadsheets/d/1qoMyAAgWpvaXCnR6oQzdBP8Rdz5_axki2uUTxY0XSkI/edit#gid=587897823",
+            "sheet_name": "direct_release",
+        },
+        retries=5,
+    )
     data_dog_log_final = DummyOperator(
         task_id="data_dog_log_final", retries=3, trigger_rule="none_failed"
     )
@@ -232,6 +260,7 @@ with DAG(
         COPY_BITBURGER_QR_LOAD,
         COPY_KROMBACHER_QR_LOAD,
         COPY_PRIO_LIST,
+        COPY_DIRECT_RELEASE
     ]
     >> data_dog_log_final
 )

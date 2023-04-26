@@ -3,31 +3,23 @@ import pandas as pd
 from airflow import DAG
 from airflow.models import Variable
 
-# from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine
 
+from include.db import prepare_pg_connection
 from include.delta_load_all_skus import run_delta_load
 from include.full_load_all_skus import run_full_load
 from include.dbt_run_raw_layer import dbt_run_raw_layers
 from include.dbt_run_all_layers import dbt_run_all_layers
-from include.my_sql_to_postgres import My_SQL_to_Postgres
+from include.my_sql_to_postgres import my_sql_to_postgres
 
 
 def branch_on():
     # create engine
-    pg_host = Variable.get("PG_HOST")
-    pg_user = Variable.get("PG_USERNAME_WRITE")
-    pg_password = Variable.get("PG_PASSWORD_WRITE")
-    pg_database = Variable.get("PG_DATABASE")
+    pg_engine = prepare_pg_connection()
     pg_schema = Variable.get("PG_RAW_SCHEMA")
-    pg_connect_string = (
-        f"postgresql://{pg_user}:{pg_password}@{pg_host}/{pg_database}"
-    )
-    pg_engine = create_engine(f"{pg_connect_string}", echo=False)
     # get merchants active
     merchants_active = pd.read_sql(
         """
@@ -127,14 +119,14 @@ with DAG(
 
     copy_PIM_CATALOUG_PRODUCT_from_mySQL = PythonOperator(
         task_id="copy_PIM_CATALOUG_PRODUCT_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_pim_catalog_product",
             "mysql_tables_to_copy": "pim_catalog_product",
             "mysql_schema": "akeneo",
             "unique_column": "id",
-            "delta_load": "FULL_RELOAD",
+            "delta_load": "UPSERT",
             "timestamp_column": " updated",
             "look_back_period": 0,
             "chunksize_to_use": 2000,
@@ -143,7 +135,7 @@ with DAG(
     )
     copy_PIM_CATALOUG_PRODUCT_model_from_mySQL = PythonOperator(
         task_id="copy_PIM_CATALOUG_PRODUCT_model_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_pim_catalog_product_model",
@@ -151,7 +143,7 @@ with DAG(
             "mysql_schema": "akeneo",
             "timestamp_column": "updated",
             "unique_column": "id",
-            "delta_load": "FULL_RELOAD",
+            "delta_load": "UPSERT",
             "look_back_period": 0,
             "chunksize_to_use": 10000,
         },
@@ -159,7 +151,7 @@ with DAG(
     )
     copy_GFGH_DATA_from_mySQL = PythonOperator(
         task_id="copy_GFGH_DATA_from_mySQL",
-        python_callable=My_SQL_to_Postgres,
+        python_callable=my_sql_to_postgres,
         op_kwargs={
             "pg_schema": "from_pim",
             "pg_tables_to_use": "cp_gfgh_product",
@@ -167,7 +159,7 @@ with DAG(
             "timestamp_column": "updated_at",
             "mysql_schema": "gfghdata",
             "unique_column": "id",
-            "delta_load": "FULL_RELOAD",
+            "delta_load": "UPSERT",
             "look_back_period": 0,
             "chunksize_to_use": 10000,
         },

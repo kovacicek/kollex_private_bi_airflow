@@ -6,14 +6,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from scipy.sparse import csr_matrix
 import sparse_dot_topn.sparse_dot_topn as ct
-from include.db import postgres_engine_factory
+from include.db import prepare_pg_connection
 
 
 logging.getLogger().setLevel(logging.INFO)
 
 
 def data_preparation():
-    engine = postgres_engine_factory()
+    engine = prepare_pg_connection()
     all_skus_sql = """
         select
             identifier as sku,
@@ -163,7 +163,7 @@ def run():
     name_matching_final.to_sql(
         schema="prod_raw_layer",
         name="result_name_matching",
-        con=postgres_engine_factory(),
+        con=prepare_pg_connection(),
         if_exists="drop",
         method="multi"
     )

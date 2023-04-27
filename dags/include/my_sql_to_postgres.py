@@ -75,8 +75,8 @@ def my_sql_to_postgres(**kwargs):
             select {unique_column} 
             from {mysql_schema}.{mysql_tables_to_copy} 
             where 
-                {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(current_date) + 1 DAY
-                AND    {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+                {timestamp_column} >= CURDATE() - INTERVAL 2 DAY
+                AND    {timestamp_column} < CURDATE() + INTERVAL 1 DAY
             """,
             con=mysql_engine,
         )
@@ -98,8 +98,8 @@ def my_sql_to_postgres(**kwargs):
             select * 
             from  {mysql_schema}.{mysql_tables_to_copy} 
             where 
-                {timestamp_column} >= current_date - INTERVAL DAYOFWEEK(curdate()) + 1 DAY
-                AND {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+                {timestamp_column} >= CURDATE() - INTERVAL 2 DAY
+                AND {timestamp_column} < CURDATE() + INTERVAL 1 DAY
             """,
             con=mysql_engine,
             chunksize=chunksize_to_use,
@@ -111,8 +111,8 @@ def my_sql_to_postgres(**kwargs):
             select * 
             from {mysql_schema}.{mysql_tables_to_copy} 
             where 
-                {timestamp_column} >= curdate() - INTERVAL DAYOFWEEK(curdate()) + 1 DAY
-                AND {timestamp_column} < curdate() - INTERVAL DAYOFWEEK(curdate()) - 1 DAY
+                {timestamp_column} >= CURDATE() - INTERVAL 2 DAY
+                AND {timestamp_column} < CURDATE() + INTERVAL 1 DAY
             """,
             con=mysql_engine,
             chunksize=chunksize_to_use,

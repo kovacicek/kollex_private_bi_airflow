@@ -21,12 +21,6 @@ def run_full_load():
     pg_info_schema = Variable.get("PG_INFO_SCHEMA")
     pg_tables_to_use = Variable.get("PG_ALL_SKUS")
 
-    df_all_skus = pd.read_sql(
-        f"""select * from {pg_raw_schema}.{pg_tables_to_use}""",
-        con=pg_engine
-    )
-    pg_identifiers = df_all_skus["identifier"].to_list()
-    pg_identifiers = ",".join([f"'{str(_id)}'" for _id in pg_identifiers])
     # Reading the product tables from Akeneo
     df_product = pd.read_sql(
         f"""                             
@@ -177,17 +171,16 @@ def run_full_load():
                             where sku is not null
                             group by sku) as gfghproduct on gfghproduct.sku = pcp.identifier
                 left join akeneo.pim_catalog_family_translation pcft on pcp.family_id = pcft.foreign_key
-                where identifier not in ({pg_identifiers})
             """,
         con=mysql_engine,
         chunksize=chunk_size,
     )
 
-    # connection = pg_engine.connect()
+    connection = pg_engine.connect()
 
-    # connection.execute(
-    #     f"drop table if exists {pg_raw_schema}.{pg_tables_to_use};"
-    # )
+    connection.execute(
+        f"drop table if exists {pg_raw_schema}.{pg_tables_to_use};"
+    )
     count = 0
 
     # Extracting Active Merchants

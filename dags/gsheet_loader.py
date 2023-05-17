@@ -211,6 +211,17 @@ with DAG(
         },
         retries=5,
     )
+    PIM_TIMELINE = PythonOperator(
+        task_id="PIM_TIMELINE",
+        python_callable=run_gsheet_load,
+        op_kwargs={
+            "pg_schema": "sheet_loader",
+            "pg_tables_to_use": "pim_timeline",
+            "url": "https://docs.google.com/spreadsheets/d/1z64KxadHtz5jW7Zn9ceGtf5KsAGxe_dHbFt_sSGwyEA/edit#gid=1293755200",
+            "sheet_name": "Timeline 1",
+        },
+        retries=5,
+    )
     COPY_DIRECT_RELEASE = PythonOperator(
         task_id="COPY_DIRECT_RELEASE",
         python_callable=run_gsheet_load,
@@ -243,7 +254,8 @@ with DAG(
         COPY_BITBURGER_QR_LOAD,
         COPY_KROMBACHER_QR_LOAD,
         COPY_PRIO_LIST,
-        COPY_DIRECT_RELEASE
+        PIM_TIMELINE,
+        COPY_DIRECT_RELEASE,
     ]
     >> data_dog_log_final
 )

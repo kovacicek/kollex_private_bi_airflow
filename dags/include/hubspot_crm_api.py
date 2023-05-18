@@ -41,7 +41,7 @@ def add_property(property_name, value, data_str):
 
 def create_or_update_contact(data):
     api_key = Variable.get("hubspot_private_key")
-    url = f"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{data.parent_customer_owner_email}"
+    url = f"{Variable.get('hubspot_api')}/{data.parent_customer_owner_email}"
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
     ts1 = make_unix_timestamp(data["parent_customer_owner_creation_date"])

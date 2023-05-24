@@ -243,7 +243,7 @@ with DAG(
         COPY_BITBURGER_QR_LOAD,
         COPY_KROMBACHER_QR_LOAD,
         COPY_PRIO_LIST,
-        COPY_DIRECT_RELEASE,
+        COPY_DIRECT_RELEASE
     ]
     >> data_dog_log_final
 )

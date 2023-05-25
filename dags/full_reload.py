@@ -4,7 +4,7 @@ from airflow.operators.python import PythonOperator
 
 from datetime import datetime, timedelta
 
-from dags.include.full_load_all_skus import run_full_load
+from include.full_load_all_skus import run_full_load
 from include.my_sql_to_postgres import my_sql_to_postgres
 
 

@@ -17,7 +17,7 @@ with DAG(
     max_active_runs=1,
 ) as dag:
     full_load = PythonOperator(
-        task_id="run_full_load",
+        task_id="full_load",
         python_callable=run_full_load,
         dag=dag,
         trigger_rule="none_failed",
@@ -75,13 +75,17 @@ with DAG(
     data_dog_log = DummyOperator(
         task_id="data_dog_log", retries=3, trigger_rule="none_failed"
     )
+    data_dog_log_final = DummyOperator(
+        task_id="data_dog_log_final", retries=3, trigger_rule="none_failed"
+    )
 
     (
         data_dog_log
         >> [
-            run_full_load,
+            full_load,
             copy_PIM_CATALOG_PRODUCT_from_my_sql,
             copy_PIM_CATALOG_PRODUCT_model_from_my_sql,
             copy_GFGH_DATA_from_my_sql,
         ]
+        >> data_dog_log_final
     )

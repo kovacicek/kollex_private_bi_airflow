@@ -140,7 +140,7 @@ def upsert_hubspot_contacts():
         """
         SELECT * FROM prod_info_layer.customer_hubspot_upload 
             WHERE updated_at 
-                BETWEEN current_date - interval '4 days' AND current_date;
+                BETWEEN current_date - interval '2 days' AND current_date;
     """,
         con=pg_engine,
     )

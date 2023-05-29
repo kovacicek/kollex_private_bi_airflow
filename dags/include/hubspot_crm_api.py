@@ -105,6 +105,10 @@ def create_or_update_contact(data):
                     "property": "PLZ",
                     "value": data["child_customer_address_zip"],
                 },
+                {
+                    "property": "Telefonnummer",
+                    "value": data["parent_customer_owner_mobile_phone"],
+                },
             ]
         }
     )
@@ -136,7 +140,7 @@ def upsert_hubspot_contacts():
         """
         SELECT * FROM prod_info_layer.customer_hubspot_upload 
             WHERE updated_at 
-                BETWEEN current_date - interval '2 days' AND current_date;
+                BETWEEN current_date - interval '4 days' AND current_date;
     """,
         con=pg_engine,
     )

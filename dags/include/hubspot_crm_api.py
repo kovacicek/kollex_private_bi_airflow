@@ -101,6 +101,14 @@ def create_or_update_contact(data):
                     "property": "wie_oft_durchschnittlichen_in_den_letzten_3_monaten_bestellt_betrieb",
                     "value": data["child_customer_number_of_orders_last_3_months"],
                 },
+                {
+                    "property": "PLZ",
+                    "value": data["child_customer_address_zip"],
+                },
+                {
+                    "property": "Telefonnummer",
+                    "value": data["parent_customer_owner_mobile_phone"],
+                },
             ]
         }
     )
